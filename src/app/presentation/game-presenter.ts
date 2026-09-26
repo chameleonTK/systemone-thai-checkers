@@ -13,6 +13,7 @@ export interface PresentationState {
     readonly mode: SessionMode;
     readonly selection: SelectionState;
     readonly setupAnimating?: boolean;
+    readonly agentPreparing?: boolean;
     readonly reviewCursor?: number;
     readonly reviewLength?: number;
     readonly agentProgress?: AgentProgress | null;
@@ -57,6 +58,7 @@ export class GamePresenter {
                 canReturnToLive: state.mode === 'review'
             }),
             setupAnimating: !!state.setupAnimating,
+            agentPreparing: !!state.agentPreparing,
             reviewCursor: state.reviewCursor || 0,
             reviewLength: state.reviewLength || 0,
             agentProgress: state.agentProgress || null

@@ -359,7 +359,8 @@ export class GameSession {
         return this.presenter.project(snapshot, {
             mode: this.mode,
             selection,
-            setupAnimating: setupAnimating || this.starting,
+            setupAnimating,
+            agentPreparing: this.starting && !setupAnimating,
             reviewCursor: this.playback.getCursor(),
             reviewLength: this.playback.getLength(),
             agentProgress: this.agentProgress

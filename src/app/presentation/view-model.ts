@@ -60,6 +60,7 @@ export interface GameViewModel {
     readonly resultText: string;
     readonly controls: ControlState;
     readonly setupAnimating: boolean;
+    readonly agentPreparing: boolean;
     readonly reviewCursor: number;
     readonly reviewLength: number;
     readonly agentProgress: AgentProgress | null;

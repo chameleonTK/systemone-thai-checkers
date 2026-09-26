@@ -68,6 +68,9 @@ This document inventories the behavior implemented by the redesigned Thai checke
 - Defines an asynchronous `PlayableAgent.chooseMove(context, cancellation)` contract for humans and bots.
 - Supplies immutable public state, legal moves, history, counters, revision, turn ID, and a copied simulation seed.
 - Includes a click-driven `HumanAgent`, a `RandomBot`, `MinimaxAgent`, and `AlphaBetaAgent`, with injectable randomness for stable tests.
+- Includes Kev, Laya, and OpenThai ONNX System One choice agents with shared move mapping, validation, cancellation, and preparation behavior.
+- Loads the large model runtimes and revision-pinned artifacts on demand, reports aggregate download progress, retains browser-cached files, and releases the previous model session when switching.
+- Defaults the Laya and OpenThai agents to typed `int8` precision while allowing either registry factory or constructor to select `int4` without adding precision UI.
 - Registers independent agents through one factory-based registry and exposes them in a split Start/opponent control.
 - Searches a configurable number of completed turns (four by default), preserving forced multi-jumps within the same depth.
 - Keeps player identity/state separate from agent behavior, so either seat may bind any agent implementation.

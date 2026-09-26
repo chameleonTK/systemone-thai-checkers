@@ -1,4 +1,4 @@
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { NgZone, NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { AppComponent } from './app.component';
@@ -28,6 +28,18 @@ describe('AppComponent', () => {
         expect(fixture.componentInstance.title).toBe('app');
     });
 
+    it('moves renderer updates from native callbacks back into the Angular zone', () => {
+        const zone = TestBed.inject(NgZone);
+        const run = spyOn(zone, 'run').and.callThrough();
+        const app = fixture.componentInstance;
+        zone.runOutsideAngular(() => app.render({
+            ...app.model,
+            agentProgress: { label: 'Downloading Kev model', loaded: 42, total: 100 }
+        }));
+        expect(run).toHaveBeenCalled();
+        expect(app.model.agentProgress.loaded).toBe(42);
+    });
+
     it('defaults to Human Agent and changes the opponent without starting', () => {
         const app = fixture.componentInstance;
         expect(app.selectedAgentId).toBe('human');
@@ -40,7 +52,8 @@ describe('AppComponent', () => {
         const app = fixture.componentInstance;
         app.selectOpponentAgent('alpha-beta');
         app.start();
-        expect(app.model.setupAnimating).toBeTrue();
+        expect(app.model.agentPreparing).toBeTrue();
+        expect(app.model.setupAnimating).toBeFalse();
         expect(app.model.players[1].name).toBe('Minimax with Alpha-Beta Pruning Agent');
         tick(600);
         expect(app.model.phase).toBe('active');

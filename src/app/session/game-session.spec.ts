@@ -113,6 +113,8 @@ describe('GameSession', () => {
         expect(renderer.models[renderer.models.length - 1].agentProgress).toEqual({
             label: 'Loading test model', loaded: 25, total: 100
         });
+        expect(renderer.models[renderer.models.length - 1].setupAnimating).toBeFalse();
+        expect(renderer.models[renderer.models.length - 1].agentPreparing).toBeTrue();
         black.finishPreparation();
         await starting;
         expect(black.context.player).toBe('black');

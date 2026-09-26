@@ -4,6 +4,8 @@ import { AGENT_REGISTRY, DEFAULT_AGENT_ID, findAgentRegistration } from './agent
 import { AlphaBetaAgent } from './alpha-beta-agent';
 import { HumanAgent } from './human-agent';
 import { MinimaxAgent } from './minimax-agent';
+import { LayaAgent } from './laya-agent';
+import { OpenThaiAgent } from './openthai-agent';
 import { RandomBot } from './random-bot';
 import { AgentTurnContext, TurnCancellationSource } from './agent-api';
 
@@ -149,5 +151,14 @@ describe('Agent registry', () => {
         AGENT_REGISTRY.forEach((registration) => {
             expect(registration.create()).not.toBe(registration.create());
         });
+    });
+
+    it('registers both additional System One agents with stable IDs and INT8 defaults', () => {
+        const laya = findAgentRegistration('laya');
+        const openThai = findAgentRegistration('openthai-onnx');
+        expect(laya.label).toBe('System One [Laya] Agent');
+        expect(openThai.label).toBe('System One [OpenThai ONNX] Agent');
+        expect((laya.create() as LayaAgent).precision).toBe('int8');
+        expect((openThai.create() as OpenThaiAgent).precision).toBe('int8');
     });
 });

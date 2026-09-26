@@ -30,11 +30,12 @@
     <div class="controls" *ngIf="model.mode === 'live'">
         <div class="start-split">
             <button class="btn btn-start" type="button" (click)="startGame.emit()"
-                [disabled]="!model.controls.canStart || model.setupAnimating">
+                [disabled]="!model.controls.canStart || model.setupAnimating || model.agentPreparing">
                 Start vs {{selectedAgentLabel()}}
             </button>
             <button class="btn btn-agent-menu" type="button" [matMenuTriggerFor]="agentMenu"
-                [disabled]="!model.controls.canStart || model.setupAnimating" aria-label="Choose opponent agent">
+                [disabled]="!model.controls.canStart || model.setupAnimating || model.agentPreparing"
+                aria-label="Choose opponent agent">
                 &#9662;
             </button>
         </div>

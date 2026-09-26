@@ -33,14 +33,21 @@ Ref: [https://github.com/kschuetz/checkers](https://github.com/kschuetz/checkers
 
 The redesigned architecture and public contracts are documented in [`design/`](design/). See [`FEATURES.md`](FEATURES.md) for the implemented feature inventory and [`TEST_CHECKLIST.md`](TEST_CHECKLIST.md) for automated and manual acceptance coverage. To build and register another bot, follow [Adding a Checker Agent](design/adding-checker-agent.md).
 
-## System One agent
+## System One agents
 
-Choose **System One Agent** in the opponent dropdown to run the decision model in the browser. A turn with one legal move is played immediately. Otherwise the agent describes the current position and up to 128 legal moves to Kev as a choice question; positions with more moves are randomly sampled down to that limit.
+The opponent dropdown includes three in-browser System One decision models:
 
-After Start is clicked, the app loads pinned kev.js and the official ONNX Runtime browser module, then downloads the Kev
-0.8B `q8f32` bundle from Hugging Face (about 822 MB) and caches it in the browser. The game begins after loading finishes.
-Chrome with WebGPU is recommended; ONNX Runtime falls back to WASM when WebGPU is unavailable. The esm.sh, jsDelivr, and
-Hugging Face origins must be allowed by the deployment's CSP.
+- **System One [Kev] Agent** uses the [Kev.js](https://github.com/ai-ecoverse/kev.js) 0.8B `q8f32` bundle (about 822 MB).
+- **System One [Laya] Agent** uses the revision-pinned [Laya ONNX exports](https://huggingface.co/techtheist/laya-onnx), derived from [ConvAI Innovations' Laya](https://huggingface.co/convaiinnovations/laya). Its default INT8 graph is about 582 MB; INT4 is about 275 MB.
+- **System One [OpenThai ONNX] Agent** uses the revision-pinned [OpenThai System One ONNX](https://huggingface.co/imtk/OpenThai-SystemOne-ONNX). Its default INT8 graph and external data total about 1.59 GB; INT4 totals about 1.41 GB. Both new model sources retain their upstream Apache-2.0 attribution.
+
+A sole legal move is played without model inference. Other turns use the same Kev-compatible `systemOne(request)` choice contract and compact move descriptions. Kev and OpenThai consider up to 128 sampled legal moves; Laya considers up to 16 so its option head remains within its 192-token budget.
+
+After Start is clicked, the selected bundle is downloaded with aggregate progress. Laya and OpenThai URLs include their pinned revisions, and all model files are cached by URL (therefore by model, revision, and precision) in the browser cache. Switching models releases the previous ONNX session while retaining downloaded cache entries. Failed downloads can be retried with Start. Chrome or Edge with WebGPU is recommended; ONNX Runtime Web falls back to WASM on unsupported systems, although the large OpenThai model may exceed practical WASM memory limits. Precision is never changed automatically after an error.
+
+Both new agents default to `int8`. There is intentionally no precision control in the UI. To select INT4, change the corresponding registry factory in [`src/app/agents/agent-registry.ts`](src/app/agents/agent-registry.ts) from `{ precision: 'int8' }` to `{ precision: 'int4' }`. The same setting is available programmatically through `new LayaAgent({ precision: 'int4' })` and `new OpenThaiAgent({ precision: 'int4' })`.
+
+The browser loads pinned Kev.js, ONNX Runtime Web 1.30, and the Hugging Face tokenizer implementation only when one of these agents is selected, keeping them out of Angular's initial bundle. The esm.sh, jsDelivr, and Hugging Face origins must be allowed by the deployment's Content Security Policy.
 
 ## Interesting rules
 *  Jumps are not compulsory but if a player refused to make an available jump, the opposing player could remove the piece that should have jumped. It is called "huff"

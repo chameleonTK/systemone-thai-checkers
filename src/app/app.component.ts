@@ -1,4 +1,4 @@
-import { Component, Inject, OnDestroy } from '@angular/core';
+import { Component, Inject, NgZone, OnDestroy } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import {
     AGENT_REGISTRY,
@@ -35,7 +35,7 @@ export class AppComponent implements RendererPort, OnDestroy {
     private session: GameSession;
     private shownEndRevision = -1;
 
-    constructor(public dialog: MatDialog) {
+    constructor(public dialog: MatDialog, private readonly zone: NgZone) {
         this.session = this.createSession(this.selectedAgent);
     }
 
@@ -45,11 +45,13 @@ export class AppComponent implements RendererPort, OnDestroy {
     }
 
     render(model: GameViewModel): void {
-        this.model = model;
-        if (model.mode === 'live' && model.phase === 'ended' && model.revision !== this.shownEndRevision) {
-            this.shownEndRevision = model.revision;
-            this.openDialog('Game Over', model.resultText);
-        }
+        this.zone.run(() => {
+            this.model = model;
+            if (model.mode === 'live' && model.phase === 'ended' && model.revision !== this.shownEndRevision) {
+                this.shownEndRevision = model.revision;
+                this.openDialog('Game Over', model.resultText);
+            }
+        });
     }
 
     private createSession(opponent: AgentRegistration): GameSession {
@@ -67,22 +69,28 @@ export class AppComponent implements RendererPort, OnDestroy {
     }
 
     animateSetup(model: GameViewModel): Promise<void> {
-        this.model = model;
-        return new Promise<void>((resolve) => setTimeout(resolve, 600));
+        return this.zone.run(() => {
+            this.model = model;
+            return new Promise<void>((resolve) => setTimeout(resolve, 600));
+        });
     }
 
     animateTransition(model: GameViewModel): Promise<void> {
-        this.model = model;
-        return Promise.resolve();
+        return this.zone.run(() => {
+            this.model = model;
+            return Promise.resolve();
+        });
     }
 
     showDiagnostic(diagnostic: SessionDiagnostic): void {
-        this.diagnostic = `${diagnostic.code}: ${diagnostic.message}`;
+        this.zone.run(() => {
+            this.diagnostic = `${diagnostic.code}: ${diagnostic.message}`;
+        });
     }
 
     start(): void {
         this.diagnostic = '';
-        if (!this.model.controls.canStart || this.model.setupAnimating) {
+        if (!this.model.controls.canStart || this.model.setupAnimating || this.model.agentPreparing) {
             return;
         }
         this.session.destroy();
@@ -91,7 +99,8 @@ export class AppComponent implements RendererPort, OnDestroy {
     }
 
     selectOpponentAgent(id: string): void {
-        if (!this.model.controls.canStart || this.model.setupAnimating || !findAgentRegistration(id)) {
+        if (!this.model.controls.canStart || this.model.setupAnimating || this.model.agentPreparing
+            || !findAgentRegistration(id)) {
             return;
         }
         this.selectedAgentId = id;
