@@ -47,27 +47,58 @@ function moveDescription(move: MoveOption): string {
     return details.join('; ');
 }
 
-function boardState(snapshot: GameSnapshot): unknown {
-    return {
-        game: 'Thai checkers',
-        goal: 'Choose the strongest legal move for the side to move.',
-        rules: [
-            'Captures are compulsory.',
-            'A forced square means the same piece must continue its multi-jump.',
-            'Men move forward but capture in either direction.',
-            'Kings slide diagonally and may land any distance beyond one captured piece.',
-            'Promotion ends the turn immediately.'
-        ],
-        sideToMove: snapshot.activePlayer,
-        forcedSquare: snapshot.forcedSquare,
-        completedTurns: snapshot.completedTurns,
-        noProgressTurns: snapshot.noProgressTurns,
-        pieces: snapshot.pieces.map((piece) => ({
-            side: piece.player,
-            kind: piece.kind,
-            square: piece.square
-        }))
-    };
+function sideName(side: string): string {
+    return `${side.charAt(0).toUpperCase()}${side.slice(1)}`;
+}
+
+function boardState(snapshot: GameSnapshot): string {
+    const pieces: { [square: number]: string } = {};
+    snapshot.pieces.forEach((piece) => {
+        pieces[piece.square] = `${piece.player === 'black' ? 'B' : 'W'}${piece.kind === 'man' ? 'M' : 'K'}`;
+    });
+    const rows: string[] = [];
+    for (let row = 0; row < 8; row += 1) {
+        const cells: string[] = [];
+        for (let column = 0; column < 8; column += 1) {
+            if ((row + column) % 2 !== 0) {
+                cells.push('[    ]');
+                continue;
+            }
+            const square: number = row * 4 + Math.floor(column / 2) + 1;
+            cells.push(`[${String(square).padStart(2, '0')}:${pieces[square] || '--'}]`);
+        }
+        rows.push(cells.join(''));
+    }
+    const side: string = snapshot.activePlayer;
+    return [
+        `Goal: Choose the strongest provided legal move for the ${side} side to move.`,
+        '',
+        'Rules:',
+        '- Captures are compulsory.',
+        '- Men move and capture diagonally forward.',
+        '- During a multi-jump, the same piece must continue capturing.',
+        '- Kings slide diagonally, capture one opposing piece, and land on the immediately following empty square.',
+        '- Promotion ends the turn immediately.',
+        '',
+        'Orientation:',
+        '- Squares 01–04 are White\'s promotion edge.',
+        '- Squares 29–32 are Black\'s promotion edge.',
+        '- Black moves toward larger square numbers.',
+        '- White moves toward smaller square numbers.',
+        '',
+        'Legend:',
+        'BM = black man',
+        'BK = black king',
+        'WM = white man',
+        'WK = white king',
+        '-- = empty playable square',
+        '',
+        'Board:',
+        ...rows,
+        '',
+        'Your side:',
+        sideName(side)
+    ].join('\n');
 }
 
 export class SystemOneAgent implements PreparableAgent, DisposableAgent {
@@ -157,7 +188,8 @@ export class SystemOneAgent implements PreparableAgent, DisposableAgent {
             questions: {
                 move: {
                     type: 'choice',
-                    instructions: 'Select the legal move most likely to lead the side to move to victory.',
+                    instructions: `Select the legal move most likely to lead the ${context.snapshot.activePlayer} `
+                        + 'side to move to victory.',
                     criteria
                 }
             }
