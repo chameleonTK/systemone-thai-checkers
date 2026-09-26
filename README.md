@@ -27,9 +27,11 @@
 
 ✅ If an exact board position is repeated a third time, the game automatically ends in a draw.
 
-✅ If 50 moves have taken place (for both players) since the last capture or advancement of a regular checker, the game ends in a draw.
+✅ If 50 completed player turns have taken place since the last capture or advancement of a regular checker, the game ends in a draw. A multi-jump chain counts as one turn.
 
 Ref: [https://github.com/kschuetz/checkers](https://github.com/kschuetz/checkers)
+
+The redesigned architecture and public contracts are documented in [`design/`](design/). See [`FEATURES.md`](FEATURES.md) for the implemented feature inventory and [`TEST_CHECKLIST.md`](TEST_CHECKLIST.md) for automated and manual acceptance coverage.
 
 ## Interesting rules
 *  Jumps are not compulsory but if a player refused to make an available jump, the opposing player could remove the piece that should have jumped. It is called "huff"
@@ -41,12 +43,8 @@ Ref: [https://github.com/kschuetz/checkers](https://github.com/kschuetz/checkers
 
 ## Development server
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+Run `npm start` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
 
 ## Build
 
-Run `ng build --prod --base-href https://chameleontk.github.io/code-challanges/week8_checkers/` to build. The build artifacts will be stored in the `dist/` directory. 
-
-Then run `ngh --dir=dist/app` to deplot the project.
-
-see [[How to deploy Angular Apps to GitHub Pages (gh-pages)](https://medium.com/tech-insights/how-to-deploy-angular-apps-to-github-pages-gh-pages-896c4e10f9b4)]
+Run `npm run build -- --prod` to build. The build artifacts will be stored in the `dist/` directory.

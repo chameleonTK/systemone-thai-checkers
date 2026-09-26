@@ -1,4 +1,22 @@
-<div class="container">
-    <board [game]="game" [tiles]="game.board.tiles" [tokens]="game.board.tokens"></board>
-    <stat [game]="game" [player1]="game.players[0]" [player2]="game.players[1]"></stat>    
+<div class="container" *ngIf="model">
+    <app-board
+        [board]="model.board"
+        [setupAnimating]="model.setupAnimating"
+        [hidePieces]="model.phase === 'ready' && !model.setupAnimating"
+        (squareClick)="selectSquare($event)">
+    </app-board>
+    <app-board-stat
+        [model]="model"
+        [pdnText]="pdnText"
+        [diagnostic]="diagnostic"
+        (pdnTextChange)="pdnText = $event"
+        (startGame)="start()"
+        (rewindGame)="rewind()"
+        (resignGame)="resign()"
+        (openReview)="review()"
+        (reviewForward)="reviewForward()"
+        (reviewBack)="reviewBack()"
+        (playReview)="playReview()"
+        (returnToLive)="returnToLive()">
+    </app-board-stat>
 </div>

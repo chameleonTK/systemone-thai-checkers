@@ -1,53 +1,41 @@
-import { Component, OnInit } from '@angular/core';
-import { Input } from '@angular/core';
-import { Checker } from "../Checker";
-import { PlayableAgent } from "../Player";
-import { Lang } from "../Lang";
-// import { Rules } from '../rules';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Lang } from '../Lang';
+import { GameViewModel, PlayerView } from '../presentation';
 
 @Component({
-  selector: 'stat',
-  templateUrl: './board-stat-component.component.html',
-  styleUrls: ['./board-stat-component.component.css']
+    selector: 'app-board-stat',
+    templateUrl: './board-stat-component.component.html',
+    styleUrls: ['./board-stat-component.component.css']
 })
-export class BoardStatComponentComponent implements OnInit {
-  @Input() player1: PlayableAgent;
-  @Input() player2: PlayableAgent;
-  @Input() game: Checker;
+export class BoardStatComponentComponent {
+    @Input() model: GameViewModel;
+    @Input() pdnText = '';
+    @Input() diagnostic = '';
+    @Output() pdnTextChange = new EventEmitter<string>();
+    @Output() startGame = new EventEmitter<void>();
+    @Output() rewindGame = new EventEmitter<void>();
+    @Output() resignGame = new EventEmitter<void>();
+    @Output() openReview = new EventEmitter<void>();
+    @Output() reviewForward = new EventEmitter<void>();
+    @Output() reviewBack = new EventEmitter<void>();
+    @Output() playReview = new EventEmitter<void>();
+    @Output() returnToLive = new EventEmitter<void>();
 
-//   @Input() rules: Rules;
-  lang: Lang = new Lang();
+    readonly lang = new Lang();
 
-  constructor() { }
-
-  ngOnInit(): void {
-  }
-
-  txt(key: string) {
-    return this.lang.txt(key);
-  }
-
-  getBackgroundColor(player: PlayableAgent):string {
-    if (player.active) {
-      return player.color
-    } else {
-      return "#fff";
+    txt(key: string): string {
+        return this.lang.txt(key);
     }
-  }
 
-  getTextColor(player: PlayableAgent):string {
-    if (player.active) {
-      return "#fff";
-    } else {
-      return player.color;
+    getBackgroundColor(player: PlayerView): string {
+        return player.active ? player.color : '#fff';
     }
-  }
 
-  redo() {
-    this.game.redo();
-  }
+    getTextColor(player: PlayerView): string {
+        return player.active ? '#fff' : player.color;
+    }
 
-  giveup() {
-    this.game.giveup();
-  }
+    updatePdn(value: string): void {
+        this.pdnTextChange.emit(value);
+    }
 }

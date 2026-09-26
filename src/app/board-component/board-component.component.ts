@@ -1,108 +1,62 @@
-import { Component, OnInit } from '@angular/core';
-import { Input } from '@angular/core';
-import { Tile } from "../Tile";
-import { Token } from "../Token";
-import { Checker } from "../Checker";
-// import { Rules } from '../rules';
-// import { faChessQueen } from '@fortawesome/free-solid-svg-icons';
-
-// import {
-//   trigger,
-//   state,
-//   style,
-//   animate,
-//   transition,
-// } from '@angular/animations';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { BoardView, PieceView, TileView } from '../presentation';
 
 @Component({
-    selector: 'board',
+    selector: 'app-board',
     templateUrl: './board-component.component.html',
-    styleUrls: ['./board-component.component.css'],
-    animations: [
-      // trigger('movingtoken', [
-      //     state('*', style({ 
-      //       top: '{{top}}',
-      //       left: '{{left}}'
-      //     }), {params: {top: 0, left:0}}),
-      //     transition('*=>*', animate('1s ease')),
-      // ])
-
-      // [@movingtoken]="{value: state, params: {top:token.top, left:token.left}}"
-    ]
+    styleUrls: ['./board-component.component.css']
 })
-export class BoardComponentComponent implements OnInit {
-    @Input() tiles: Tile[][];
-    @Input() tokens: Token[];
-    @Input() game: Checker;
+export class BoardComponentComponent {
+    @Input() board: BoardView;
+    @Input() setupAnimating = false;
+    @Input() hidePieces = false;
+    @Output() squareClick = new EventEmitter<number>();
 
-  //   // faKing = faChessQueen;
-    constructor() { 
+    getRowTileClassName(row: number): string {
+        return `tile-row-${row}`;
     }
 
-    ngOnInit(): void {
-    }
-
-    // Function for Tiles
-
-    getRowTileClassName(i:number):string {
-        return 'tile-row-'+i;
-    }
-
-    getClassTile(tile: Tile):string {
+    getClassTile(tile: TileView): string {
         return [
-            "tile-col-"+tile.y, 
-            (tile.playable ?'tile-white':'tile-black'),
-            (tile.selected ?'highlight':''),
-        ].join(" ")
+            `tile-col-${tile.column}`,
+            tile.playable ? 'tile-white' : 'tile-black',
+            tile.highlighted ? 'highlight' : ''
+        ].join(' ');
     }
 
-    getStyleTile(tile: Tile): Object {
-        const left = ((tile.y)*10)+"vmin";
-        const top = ((tile.x)*10)+"vmin";
-        return {
-            'top': top,
-            'left': left
+    getStyleTile(tile: TileView): { [key: string]: string } {
+        return { left: `${tile.column * 10}vmin`, top: `${tile.row * 10}vmin` };
+    }
+
+    onClickTile(tile: TileView): void {
+        if (tile.square !== null) {
+            this.squareClick.emit(tile.square);
         }
     }
 
-    onClickTile(tile: Tile) {
-        this.game.selectTile(tile);
-    }
-
-
-    // Function for Tokens
-    getClassToken(token: Token):string {
-
+    getClassPiece(piece: PieceView): string {
         return [
-            (token.owner.active?'active':''),
-            (token.isKing()?'token-king':''),
-        ].join(" ")
+            piece.enabled ? 'active' : '',
+            piece.kind === 'king' ? 'token-king' : '',
+            piece.selected ? 'selected' : '',
+            this.setupAnimating ? 'setup-enter' : '',
+            this.hidePieces ? 'prestart-hidden' : ''
+        ].join(' ');
     }
 
-    getStyleToken(token: Token): Object {
-        const left = ((token.y)*10)+"vmin";
-        const top = ((token.x)*10)+"vmin";
+    getStylePiece(piece: PieceView): { [key: string]: string } {
+        return { left: `${piece.column * 10}vmin`, top: `${piece.row * 10}vmin` };
+    }
+
+    getInnerStylePiece(piece: PieceView): { [key: string]: string } {
         return {
-            'top': top,
-            'left': left
-        }
+            'box-shadow': piece.selected ? `0 0 20px 0 ${piece.color}` : '',
+            'background-color': piece.kind === 'king' ? `${piece.color}80` : piece.color,
+            'border-color': piece.color
+        };
     }
 
-    onClickToken(token: Token) {
-        this.game.selectToken(token);
+    onClickPiece(piece: PieceView): void {
+        this.squareClick.emit(piece.square);
     }
-
-    getInnerStyleToken(token: Token): Object {
-
-        const color = token.owner.color;
-        const transparentColor = color+"80";
-        const shadow = "0px 0px 20px 0px "+color;
-
-        return {
-            'box-shadow': token.selected ? shadow:'',
-            'background-color': token.isKing() ? transparentColor:color,
-            'border-color': color,
-        }
-    }
-
 }

@@ -1,20 +1,19 @@
-<div class="container" style="border: 1px solid #eee;">
-    <div *ngFor="let row of tiles; let i = index" class="tiles" [ngClass]="getRowTileClassName(i)">
-        <div *ngFor="let tile of row; let j = index" 
-            class="tile" 
+<div class="container board-shell" *ngIf="board" style="border: 1px solid #eee;">
+    <div *ngFor="let row of board.tiles; let i = index" class="tiles" [ngClass]="getRowTileClassName(i)">
+        <div *ngFor="let tile of row"
+            class="tile"
             (click)="onClickTile(tile)"
             [ngClass]="getClassTile(tile)"
-            [style]="getStyleTile(tile)">
-            
+            [ngStyle]="getStyleTile(tile)">
         </div>
     </div>
 
-    <div *ngFor="let token of tokens; let i = index" class="token"
-        [ngClass]="getClassToken(token)"
-        (click)="onClickToken(token)"
-        [style]="getStyleToken(token)">    
-        <div class="token-inner" [style]="getInnerStyleToken(token)"> </div>
-
-        
+    <div *ngFor="let piece of board.pieces; let i = index"
+        class="token"
+        [style.animation-delay.ms]="setupAnimating ? i * 25 : 0"
+        [ngClass]="getClassPiece(piece)"
+        (click)="onClickPiece(piece)"
+        [ngStyle]="getStylePiece(piece)">
+        <div class="token-inner" [ngStyle]="getInnerStylePiece(piece)"></div>
     </div>
 </div>

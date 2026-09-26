@@ -1,35 +1,44 @@
-<div class="container">
-    <h1 class="title">{{txt("หมากฮอส")}}</h1>
-    <h2> {{txt("ตาที่")}} {{game.getTurnIndex()}}</h2>
-    <div class="desc" id="desc-player1" 
-        [style.background-color]="getBackgroundColor(player1)"
-        [style.color]="getTextColor(player1)">
-        <div class="desc-name">{{txt("ผู้เล่น")}} 1</div>
+<div class="container" *ngIf="model">
+    <h1 class="title">{{txt('หมากฮอส')}}</h1>
+    <h2>{{model.mode === 'review' ? 'Review' : txt('ตาที่')}} {{model.stepIndex}}</h2>
+
+    <div *ngFor="let player of model.players; let i = index"
+        class="desc"
+        [id]="'desc-player' + (i + 1)"
+        [style.background-color]="getBackgroundColor(player)"
+        [style.color]="getTextColor(player)">
+        <div class="desc-name">{{player.name}}</div>
         <ul class="desc-token">
-            <li>{{txt("อัศวิน")}}: <span class="knight">{{player1.getNKnight()}}</span> {{txt("ตัว")}}</li>
-            <li>{{txt("คิง")}}: <span class="king">{{player1.getNKing()}}</span> {{txt("ตัว")}}</li>
+            <li>{{txt('อัศวิน')}}: <span class="knight">{{player.manCount}}</span> {{txt('ตัว')}}</li>
+            <li>{{txt('คิง')}}: <span class="king">{{player.kingCount}}</span> {{txt('ตัว')}}</li>
         </ul>
     </div>
 
-    <div class="desc" id="desc-player2"
-        [style.background-color]="getBackgroundColor(player2)"
-        [style.color]="getTextColor(player2)">
-        <div class="desc-name">{{txt("ผู้เล่น")}} 2</div>
-        <ul class="desc-token">
-            <li>{{txt("อัศวิน")}}: <span class="knight">{{player2.getNKnight()}}</span> {{txt("ตัว")}}</li>
-            <li>{{txt("คิง")}}: <span class="king">{{player2.getNKing()}}</span> {{txt("ตัว")}}</li>
-        </ul>
+    <div class="desc records">
+        <div *ngFor="let record of model.historyText" class="record"><span>{{record}}</span></div>
     </div>
 
-    <!-- <fa-icon [icon]="faKing"></fa-icon> -->
-    <div class="desc records" >
-        <div *ngFor="let record of game.logger.getRecords(); let i = index" class="record">
-            <span style="padding-left: 10px;">{{record}}</span> 
-            
-        </div>
+    <div class="result" *ngIf="model.resultText">{{model.resultText}}</div>
+    <div class="diagnostic" *ngIf="diagnostic">{{diagnostic}}</div>
+
+    <div class="controls" *ngIf="model.mode === 'live'">
+        <button class="btn btn-start" type="button" (click)="startGame.emit()" [disabled]="!model.controls.canStart">Start</button>
+        <button class="btn btn-rewind" type="button" (click)="rewindGame.emit()" [disabled]="!model.controls.canRewind">Rewind</button>
+        <button class="btn btn-giveup" type="button" (click)="resignGame.emit()" [disabled]="!model.controls.canResign">Give Up</button>
     </div>
-    <div style="margin: 0px 10px;" >
-        <button class="btn btn-redo" type="button" (click)="redo()">Redo</button>
-        <button class="btn btn-giveup" type="button" (click)="giveup()">Give Up</button>
+
+    <!-- <div class="pdn-panel">
+        <label for="pdn-input">PDN type-31 movetext</label>
+        <textarea id="pdn-input" [value]="pdnText" (input)="updatePdn($any($event.target).value)"
+            placeholder="9-13 24-20 *"></textarea>
+        <button class="btn" type="button" (click)="openReview.emit()">Review PDN</button>
+    </div> -->
+
+    <div class="controls" *ngIf="model.mode === 'review'">
+        <div class="review-progress">Step {{model.reviewCursor}} / {{model.reviewLength}}</div>
+        <button class="btn" type="button" (click)="reviewBack.emit()" [disabled]="!model.controls.canReviewStepBack">Previous</button>
+        <button class="btn" type="button" (click)="reviewForward.emit()" [disabled]="!model.controls.canReviewStepForward">Next</button>
+        <button class="btn" type="button" (click)="playReview.emit()" [disabled]="!model.controls.canReviewStepForward">Play</button>
+        <button class="btn" type="button" (click)="returnToLive.emit()">Return to Live</button>
     </div>
 </div>

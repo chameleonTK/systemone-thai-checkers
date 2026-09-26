@@ -4,9 +4,9 @@
   "scripts": {
     "preinstall": "npx npm-force-resolutions",
     "ng": "ng",
-    "start": "export SET NODE_OPTIONS=--openssl-legacy-provider && ng serve",
-    "build": "ng build",
-    "test": "export SET NODE_OPTIONS=--openssl-legacy-provider && ng test",
+    "start": "NODE_OPTIONS=--openssl-legacy-provider ng serve",
+    "build": "NODE_OPTIONS=--openssl-legacy-provider ng build",
+    "test": "NODE_OPTIONS=--openssl-legacy-provider ng test",
     "lint": "ng lint",
     "e2e": "ng e2e"
   },

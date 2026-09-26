@@ -1,79 +1,93 @@
 # Current Engine Features
 
-This document inventories behavior implemented by the current engine in `src/app/`. It is a baseline for the redesign, not a statement that every behavior is correct or should be retained.
+This document inventories the behavior implemented by the redesigned Thai checkers application. Architecture details and diagrams live in [`design/`](design/), while executable and manual acceptance coverage is listed in [`TEST_CHECKLIST.md`](TEST_CHECKLIST.md).
 
-## Game Setup
+## Game setup and lifecycle
 
-- Creates an 8×8 board with alternating playable and non-playable tiles.
-- Creates exactly two players, each with a name, index, color, orientation, active state, and collection of pieces.
+- Creates an 8×8 board with 32 numbered playable squares using PDN type-31/N2 orientation.
+- Creates two configurable player seats with stable identity, display name, color, and any `PlayableAgent` implementation.
 - Places eight ordinary pieces per player on the first two rows from each player's perspective.
-- Starts Player 1 and immediately asks the active player agent to play.
-- Tracks pieces both globally on the board and per player.
-- Provides board-boundary checks, coordinate lookup, and 180-degree coordinate conversion for the opposing perspective.
+- Exposes the initial position in `READY`, allowing the UI to animate setup before activating the engine.
+- Starts Black after setup animation and follows the `READY → ACTIVE → ENDED` lifecycle.
+- Supports resignation, one-step Rewind, and restoration of an ended game to active play.
 
-## Pieces and Movement
+## Pieces and movement
 
-- Supports ordinary pieces (called “knights” in the code/UI) and promoted kings.
+- Supports ordinary pieces (shown as “knights” in the existing UI) and promoted kings.
 - Ordinary pieces move one diagonal square forward into an empty square.
-- Ordinary pieces capture forward by jumping over one opposing piece into the empty square immediately beyond it.
+- Ordinary pieces capture forward over one opponent into the immediately following empty square.
 - Kings move diagonally forward or backward across any number of empty squares.
-- A king may pass over empty squares before capturing the first opposing piece it encounters, landing on the square immediately beyond it.
-- Friendly pieces block movement and capture paths.
-- Move generation returns a `Move` object containing the piece, source, destination, capture status, and captured piece.
+- A king may cross empty squares before capturing the first opponent it encounters and must land immediately beyond it.
+- Friendly pieces and a second occupied square block a king's path.
+- Supports any physically possible number of kings.
 
-## Captures, Promotion, and Turns
+## Captures, promotion, and turns
 
-- Enforces captures globally: a non-capturing move is rejected when any piece owned by the active player can capture.
-- Removes captured pieces from both the board and their owner's collection.
-- Requires consecutive captures by the same piece while another capture remains available.
-- Disables the player's other pieces during a capture sequence.
-- Promotes an ordinary piece that reaches the opponent's back rank.
-- Ends the turn immediately on promotion, even if the newly promoted king could capture again.
-- Alternates active players after an ordinary move or a completed capture sequence.
-- Exposes a turn index; in the current implementation it advances after every individual move, including each jump in a multi-capture sequence.
+- Enforces captures globally: when any active piece can capture, quiet moves are unavailable.
+- Allows any legal capture alternative; a player is not required to maximize the capture count.
+- Removes captured pieces immediately after each atomic jump.
+- Requires consecutive captures by the same piece while another capture remains.
+- Promotes an ordinary piece on the opponent's back rank.
+- Ends the turn immediately on promotion, even if the new king could capture.
+- Alternates the active player after a quiet move or completed capture chain.
+- Counts a complete multi-jump chain as one player turn while retaining each jump as an atomic history step.
 
-## Selection and Validation
+## Selection and validation
 
-- Only active, enabled pieces can be selected.
-- Selecting a piece calculates and highlights its legal destination tiles.
-- Only a highlighted destination can be played.
-- Clears previous piece/tile selection and cached moves when selection or turn state changes.
-- Reports compulsory-capture and malformed-capture errors through an optional callback.
+- `RuleValidator` is the single authority for move generation, validation, continuation, promotion, and terminal results.
+- Only an active piece present in the supplied legal-move list can be selected.
+- Selecting a piece highlights its legal destinations without mutating game state.
+- Selecting an invalid destination clears selection and highlights.
+- Forced continuation automatically reselects the capturing piece and exposes only its next legal destinations.
+- Illegal and stale commands leave the engine unchanged and return typed rejection codes.
 
-## Game Completion
+## Game completion
 
-- Declares a loss when a player has no pieces remaining.
-- Declares a loss when a player has no legal move.
-- Declares a draw when the latest serialized board position has occurred at least three times.
-- Declares a draw after 50 logged moves without a capture.
-- Allows the active player to resign (“give up”).
-- Disables every piece when the game ends and reports the result through an optional callback.
-- Stores the winner, loser, end flag, and human-readable cause in the current game state.
+- Declares a win when the opponent has no pieces or no legal move.
+- Allows the active player to resign and awards the win to the opponent.
+- Declares a draw on the third occurrence of an exact position; identity includes every piece mask and side to move.
+- Counts the initial position as the first repetition occurrence.
+- Declares a draw after 50 completed player turns without a capture or ordinary-piece advance.
+- Resets the no-progress count after any capture or ordinary-piece advance.
+- Exposes typed ongoing/win/draw results; the presenter derives user-facing text and configured winner names.
 
-## History and Undo
+## History, Rewind, and logging
 
-- Records moves using coordinates such as `1.A1-B2` (move) and `1.A1xC3` (capture).
-- Adds `*` when the captured piece was a king and `$` when the moving piece was promoted.
-- Serializes board positions for repetition detection and retains the latest 50 position snapshots.
-- Converts between numeric coordinates and labels (`A1`, `B2`, and so on).
-- The method and UI label named `redo` actually undo the most recent move: it moves the piece back, restores a captured piece and its king status, reverses promotion, restores the active player, and adjusts piece availability for capture chains.
+- Records each quiet move or jump as a reversible atomic history entry.
+- Preserves captured square/type, promotion, forced continuation, side to move, counters, repetition state, phase, and result.
+- Rewind reverses one atomic step and always advances the revision so delayed agent answers become stale.
+- Public history groups a completed capture chain into one player turn.
+- Exports headerless PDN 3.0 type-31 movetext using numeric squares and the `-` separator.
+- Imports optional move numbers and Default result tokens with line, column, token, and turn diagnostics.
+- Resolves shortened capture notation from position legality and requires intermediate landing squares when a path is ambiguous.
+- Rejects unsupported headers, comments, variations, annotations, setup/FEN commands, alphabetic squares, and multiple games.
+- Runs playback in an isolated review engine with forward/back navigation and return-to-live.
 
-## Player Agents and UI Integration
+## Player agents and UI integration
 
-- Defines a `PlayableAgent` interface for human or automated players.
-- Includes a passive `Player` implementation and a `PlayerRandomBot` implementation.
-- The random bot waits 500 ms, chooses a random legal move, and prioritizes captures.
-- The current `Checker` constructor hard-codes two random bots; using human players requires changing the constructor.
-- Exposes state and commands used by the Angular UI: board/piece rendering, selected moves, active-player styling, piece counts, move history, undo, resignation, and end/error dialogs.
-- Includes a small translation helper that maps several Thai UI labels to English.
+- Defines an asynchronous `PlayableAgent.chooseMove(context, cancellation)` contract for humans and bots.
+- Supplies immutable public state, legal moves, history, counters, revision, turn ID, and a copied simulation seed.
+- Includes a click-driven `HumanAgent` and a `RandomBot` with injectable randomness.
+- Keeps player identity/state separate from agent behavior, so either seat may bind any agent implementation.
+- Cancels pending work after rewind, resignation, review entry, session destruction, or a completed turn.
+- Ignores delayed responses and safely reports illegal or failed agents without manufacturing a rules result.
+- Keeps the established board styling while adding Start, Rewind, resignation, PDN input/review controls, diagnostics, and winner display.
+- Keeps rendering, animations, timers, Angular, RxJS, and DOM access outside the engine.
 
-## Known Behavioral Boundaries
+## Lightweight bot simulation
 
-- Only a small subset of setup behavior is covered by automated engine tests.
+- Stores hot game state as four unsigned 32-bit piece masks plus numeric/boolean turn fields.
+- Packs atomic moves into numbers containing source, destination, capture, captured square, and promotion data.
+- Creates `SearchSession` from an isolated copied `SimulationSeed`.
+- Provides reusable-buffer `legalMoves`, reversible `makeMove`/`unmakeMove`, result lookup, material evaluation, and independent root cloning.
+- Uses the same `RuleValidator` in live games and search, including continuation and draw rules.
+- Avoids UI projections, PDN, observables, promises, agents, rendering, animation, and timers in the search loop.
+- Includes a deterministic, non-gating depth-six traversal benchmark for correctness and comparative throughput.
+
+## Intentional boundaries
+
 - Ordinary pieces cannot capture backward.
-- For king captures, only the square immediately beyond the captured piece is offered as a landing square.
-- Capture choice is unrestricted; the engine does not require the route that captures the most pieces.
-- The 50-move draw check resets only on capture, not when an ordinary piece advances.
-- Position repetition compares board contents only; it does not encode the active player or other turn state.
-- Undo does not decrement the turn index, recompute/reset the current game state, or restart the restored active agent.
-- There is no redo-after-undo stack, save/load format, deterministic random seed, or configurable ruleset.
+- Huffing, maximum-capture selection, delayed capture removal, and continued movement after promotion are not part of this ruleset.
+- A king cannot choose an arbitrary landing square beyond a captured piece.
+- The application has no backend, persistence, redo-after-rewind stack, clocks, configurable rulesets, or interactive PDN variations.
+- The supported PDN format is headerless type-31 movetext, not a compatibility layer for the old `A1` log strings.
