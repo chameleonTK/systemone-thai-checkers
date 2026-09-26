@@ -72,6 +72,14 @@ This document inventories the behavior implemented by the redesigned Thai checke
 - Loads the large model runtimes and revision-pinned artifacts on demand, reports aggregate download progress, retains browser-cached files, and releases the previous model session when switching.
 - Defaults the Laya and OpenThai agents to typed `int8` precision while allowing either registry factory or constructor to select `int4` without adding precision UI.
 - Registers independent agents through one factory-based registry and exposes them in a split Start/opponent control.
+- Provides Play and Watch modes above the board. Play keeps the human-versus-agent flow, while Watch runs any two automated
+  agents, including self-play with the same agent.
+- Keeps Watch seat selections independent from the Play opponent selection, defaults Watch to Random versus Random, and
+  resets the board immediately when modes change.
+- Shares identical System One model clients between Watch seats and keeps differently keyed models resident concurrently;
+  session disposal releases each model after its final lease.
+- Provides a cache-clear control beside Play/Watch that releases loaded sessions and deletes cached System One model files
+  without removing unrelated Cache Storage entries.
 - Searches a configurable number of completed turns (four by default), preserving forced multi-jumps within the same depth.
 - Keeps player identity/state separate from agent behavior, so either seat may bind any agent implementation.
 - Cancels pending work after rewind, resignation, review entry, session destruction, or a completed turn.
@@ -95,4 +103,5 @@ This document inventories the behavior implemented by the redesigned Thai checke
 - Huffing, maximum-capture selection, delayed capture removal, and continued movement after promotion are not part of this ruleset.
 - A king cannot choose an arbitrary landing square beyond a captured piece.
 - The application has no backend, persistence, redo-after-rewind stack, clocks, configurable rulesets, or interactive PDN variations.
+- Loading two different large System One models for a Watch match is subject to the browser and device's available memory.
 - The supported PDN format is headerless type-31 movetext, not a compatibility layer for the old `A1` log strings.

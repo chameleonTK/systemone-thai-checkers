@@ -27,10 +27,10 @@
         <div class="model-loading-percent" *ngIf="loadingPercent() !== null">{{loadingPercent()}}%</div>
     </div>
 
-    <div class="controls" *ngIf="model.mode === 'live'">
+    <div class="controls" *ngIf="model.mode === 'live' && gameMode === 'play'">
         <div class="start-split">
             <button class="btn btn-start" type="button" (click)="startGame.emit()"
-                [disabled]="!model.controls.canStart || model.setupAnimating || model.agentPreparing">
+                [disabled]="cacheClearing || !model.controls.canStart || model.setupAnimating || model.agentPreparing">
                 Start vs {{selectedAgentLabel()}}
             </button>
             <button class="btn btn-agent-menu" type="button" [matMenuTriggerFor]="agentMenu"
@@ -47,6 +47,30 @@
         </mat-menu>
         <button class="btn btn-rewind" type="button" (click)="rewindGame.emit()" [disabled]="!model.controls.canRewind">Rewind</button>
         <button class="btn btn-giveup" type="button" (click)="resignGame.emit()" [disabled]="!model.controls.canResign">Give Up</button>
+    </div>
+
+    <div class="controls watch-controls" *ngIf="model.mode === 'live' && gameMode === 'watch'">
+        <ng-container *ngIf="model.phase === 'ready'; else watchRestart">
+            <label for="watch-black-agent">Player 1 agent</label>
+            <select id="watch-black-agent" [value]="selectedWatchBlackAgentId"
+                (change)="watchBlackAgentChange.emit($any($event.target).value)"
+                [disabled]="cacheClearing || !model.controls.canStart || model.setupAnimating || model.agentPreparing">
+                <option *ngFor="let agent of automatedAgentOptions" [value]="agent.id">{{agent.label}}</option>
+            </select>
+            <label for="watch-white-agent">Player 2 agent</label>
+            <select id="watch-white-agent" [value]="selectedWatchWhiteAgentId"
+                (change)="watchWhiteAgentChange.emit($any($event.target).value)"
+                [disabled]="cacheClearing || !model.controls.canStart || model.setupAnimating || model.agentPreparing">
+                <option *ngFor="let agent of automatedAgentOptions" [value]="agent.id">{{agent.label}}</option>
+            </select>
+            <button class="btn btn-start" type="button" (click)="startGame.emit()"
+                [disabled]="cacheClearing || !model.controls.canStart || model.setupAnimating || model.agentPreparing">
+                Start Watch
+            </button>
+        </ng-container>
+        <ng-template #watchRestart>
+            <button class="btn" type="button" (click)="restartWatchGame.emit()">Restart</button>
+        </ng-template>
     </div>
 
     <!-- <div class="pdn-panel">

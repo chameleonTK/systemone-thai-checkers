@@ -10,13 +10,21 @@ import { GameViewModel, PlayerView } from '../presentation';
 })
 export class BoardStatComponentComponent {
     @Input() model: GameViewModel;
+    @Input() gameMode: 'play' | 'watch' = 'play';
     @Input() pdnText = '';
     @Input() diagnostic = '';
     @Input() agentOptions: ReadonlyArray<AgentRegistration> = [];
+    @Input() automatedAgentOptions: ReadonlyArray<AgentRegistration> = [];
     @Input() selectedAgentId = '';
+    @Input() selectedWatchBlackAgentId = '';
+    @Input() selectedWatchWhiteAgentId = '';
+    @Input() cacheClearing = false;
     @Output() pdnTextChange = new EventEmitter<string>();
     @Output() opponentAgentChange = new EventEmitter<string>();
+    @Output() watchBlackAgentChange = new EventEmitter<string>();
+    @Output() watchWhiteAgentChange = new EventEmitter<string>();
     @Output() startGame = new EventEmitter<void>();
+    @Output() restartWatchGame = new EventEmitter<void>();
     @Output() rewindGame = new EventEmitter<void>();
     @Output() resignGame = new EventEmitter<void>();
     @Output() openReview = new EventEmitter<void>();
@@ -48,6 +56,11 @@ export class BoardStatComponentComponent {
     }
 
     playerType(player: PlayerView): string {
+        if (this.gameMode === 'watch') {
+            return this.agentLabel(player.id === 'black'
+                ? this.selectedWatchBlackAgentId
+                : this.selectedWatchWhiteAgentId);
+        }
         return player.id === 'black' ? 'Human Agent' : this.selectedAgentLabel();
     }
 
@@ -64,7 +77,11 @@ export class BoardStatComponentComponent {
     }
 
     selectedAgentLabel(): string {
-        const selected = this.agentOptions.find((agent) => agent.id === this.selectedAgentId);
+        return this.agentLabel(this.selectedAgentId);
+    }
+
+    agentLabel(id: string): string {
+        const selected = this.agentOptions.find((agent) => agent.id === id);
         return selected ? selected.label : 'Human Agent';
     }
 }

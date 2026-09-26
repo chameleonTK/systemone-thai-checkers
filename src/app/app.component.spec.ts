@@ -28,6 +28,13 @@ describe('AppComponent', () => {
         expect(fixture.componentInstance.title).toBe('app');
     });
 
+    it('renders an accessible model-cache clear button', () => {
+        fixture.detectChanges();
+        const button = fixture.nativeElement.querySelector('[aria-label="Clear model cache"]');
+        expect(button).not.toBeNull();
+        expect(button.getAttribute('title')).toBe('Clear model cache');
+    });
+
     it('moves renderer updates from native callbacks back into the Angular zone', () => {
         const zone = TestBed.inject(NgZone);
         const run = spyOn(zone, 'run').and.callThrough();
@@ -47,6 +54,53 @@ describe('AppComponent', () => {
         expect(app.selectedAgent.label).toBe('Minimax Agent');
         expect(app.model.phase).toBe('ready');
     });
+
+    it('defaults Watch mode to automated Random self-play and excludes Human', () => {
+        const app = fixture.componentInstance;
+        app.selectGameMode('watch');
+
+        expect(app.gameMode).toBe('watch');
+        expect(app.model.phase).toBe('ready');
+        expect(app.selectedWatchBlackAgentId).toBe('random');
+        expect(app.selectedWatchWhiteAgentId).toBe('random');
+        expect(app.automatedAgentOptions.some((agent) => agent.id === 'human')).toBeFalse();
+        expect(app.model.players.map((player) => player.name)).toEqual(['Player 1', 'Player 2']);
+    });
+
+    it('keeps independent Watch selections and resets the game when modes change', fakeAsync(() => {
+        const app = fixture.componentInstance;
+        app.selectGameMode('watch');
+        app.selectWatchAgent('black', 'minimax');
+        app.selectWatchAgent('white', 'alpha-beta');
+        app.start();
+        tick(600);
+        expect(app.model.phase).toBe('active');
+
+        app.selectGameMode('play');
+        expect(app.model.phase).toBe('ready');
+        expect(app.selectedAgentId).toBe('human');
+        tick(500);
+        app.selectGameMode('watch');
+        expect(app.selectedWatchBlackAgentId).toBe('minimax');
+        expect(app.selectedWatchWhiteAgentId).toBe('alpha-beta');
+        expect(app.model.phase).toBe('ready');
+        app.ngOnDestroy();
+    }));
+
+    it('rejects Human as a Watch agent and restarts to a ready board', fakeAsync(() => {
+        const app = fixture.componentInstance;
+        app.selectGameMode('watch');
+        app.selectWatchAgent('black', 'human');
+        expect(app.selectedWatchBlackAgentId).toBe('random');
+        app.start();
+        tick(600);
+        expect(app.model.phase).toBe('active');
+        app.restartWatch();
+        expect(app.model.phase).toBe('ready');
+        expect(app.selectedWatchBlackAgentId).toBe('random');
+        tick(500);
+        app.ngOnDestroy();
+    }));
 
     it('starts with a fresh instance of the selected White agent', fakeAsync(() => {
         const app = fixture.componentInstance;
@@ -69,5 +123,13 @@ describe('AppComponent', () => {
         expect(app.diagnostic).toContain('PDN_UNSUPPORTED_HEADER');
         expect(app.model.mode).toBe('live');
         expect(app.model.revision).toBe(revision);
+    });
+
+    it('resets to a ready game and reports model-cache clearing', async () => {
+        const app = fixture.componentInstance;
+        await app.clearModelCache();
+        expect(app.model.phase).toBe('ready');
+        expect(app.clearingModelCache).toBeFalse();
+        expect(app.diagnostic).toContain('MODEL_CACHE_CLEARED');
     });
 });

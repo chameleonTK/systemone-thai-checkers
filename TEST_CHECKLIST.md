@@ -101,6 +101,12 @@ This checklist is the human-readable acceptance list for the redesigned engine. 
 - [x] Equal best search moves use injectable randomness, while terminal wins dominate material evaluation.
 - [x] Agent registry IDs are unique and every factory returns a fresh independent instance.
 - [x] The Start split button defaults to Human Agent and configures White without starting the game early.
+- [x] Play is the default mode and Watch defaults to Random Agent versus Random Agent.
+- [x] Watch exposes automated agents only, supports independent seat selections, and permits the same agent in both seats.
+- [x] Switching Play/Watch cancels the old session and creates a fresh ready board while preserving per-mode selections.
+- [x] Watch automatically dispatches both seats and Restart returns the selected pairing to a ready board.
+- [x] Same-key System One seats share one client lease; different model keys can coexist and release independently.
+- [x] The model-cache button resets the game, releases loaded sessions, deletes known model files, and preserves unrelated cache entries.
 - [x] Setup animation completes before engine activation and Black dispatch.
 - [x] A failed setup animation leaves the engine ready and surfaces a diagnostic.
 - [x] Illegal bot output leaves state unchanged, emits a diagnostic, and redispatches the turn.
@@ -163,3 +169,8 @@ This checklist is the human-readable acceptance list for the redesigned engine. 
 - [ ] Play, step forward, and step backward in review; confirm live input is disabled.
 - [ ] Return from review and confirm the live match is exactly where it was left.
 - [ ] Configure Human vs RandomBot and bot vs bot seats in `AppComponent`; confirm both use the same session contract.
+- [ ] Switch between Play and Watch before, during, and after a game; confirm the old match is discarded without late updates.
+- [ ] Run Random versus Random to completion and confirm the winner identifies Player 1 or Player 2 unambiguously.
+- [ ] Select the same System One model for both Watch seats and confirm it loads once; test a mixed-model pairing on a device
+  with sufficient memory and confirm both preparation phases are reported.
+- [ ] Clear the model cache and confirm the current game resets, a completion diagnostic appears, and the next model game downloads again.

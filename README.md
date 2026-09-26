@@ -33,6 +33,18 @@ Ref: [https://github.com/kschuetz/checkers](https://github.com/kschuetz/checkers
 
 The redesigned architecture and public contracts are documented in [`design/`](design/). See [`FEATURES.md`](FEATURES.md) for the implemented feature inventory and [`TEST_CHECKLIST.md`](TEST_CHECKLIST.md) for automated and manual acceptance coverage. To build and register another bot, follow [Adding a Checker Agent](design/adding-checker-agent.md).
 
+## Play and Watch modes
+
+Use the control above the board to choose **Play** or **Watch**. Play preserves the human-versus-agent game. Watch lets you
+select an automated agent for Player 1 and Player 2, then starts an unattended match. Both seats may use the same agent.
+Changing modes resets the current game immediately; Watch's Restart button resets the same pairing to a ready board.
+The bin button beside the mode selector releases loaded model sessions, resets the current game, and removes cached Kev,
+Laya, and OpenThai model files. Unrelated browser cache entries are preserved.
+
+Watch can load two different System One models at once. Matching model selections share one browser model client, while
+different selections remain loaded concurrently. Mixed large-model matches may exceed the available RAM or GPU memory on
+some devices; these failures are shown in the existing diagnostic panel.
+
 ## System One agents
 
 The opponent dropdown includes three in-browser System One decision models:

@@ -1,19 +1,39 @@
 <div class="container" *ngIf="model">
-    <app-board
-        [board]="model.board"
-        [setupAnimating]="model.setupAnimating"
-        [hidePieces]="model.phase === 'ready' && !model.setupAnimating"
-        (squareClick)="selectSquare($event)">
-    </app-board>
+    <div class="board-column">
+        <div class="mode-switch" role="group" aria-label="Game mode">
+            <button type="button" (click)="selectGameMode('play')"
+                [class.active]="gameMode === 'play'" [attr.aria-pressed]="gameMode === 'play'">Play</button>
+            <button type="button" (click)="selectGameMode('watch')"
+                [class.active]="gameMode === 'watch'" [attr.aria-pressed]="gameMode === 'watch'">Watch</button>
+            <button class="btn-clear-cache" type="button" (click)="clearModelCache()"
+                [disabled]="clearingModelCache" aria-label="Clear model cache" title="Clear model cache">
+                <span aria-hidden="true">🗑️</span>
+            </button>
+        </div>
+        <app-board
+            [board]="model.board"
+            [setupAnimating]="model.setupAnimating"
+            [hidePieces]="model.phase === 'ready' && !model.setupAnimating"
+            (squareClick)="selectSquare($event)">
+        </app-board>
+    </div>
     <app-board-stat
         [model]="model"
+        [gameMode]="gameMode"
         [pdnText]="pdnText"
         [diagnostic]="diagnostic"
         [agentOptions]="agentOptions"
+        [automatedAgentOptions]="automatedAgentOptions"
         [selectedAgentId]="selectedAgentId"
+        [selectedWatchBlackAgentId]="selectedWatchBlackAgentId"
+        [selectedWatchWhiteAgentId]="selectedWatchWhiteAgentId"
+        [cacheClearing]="clearingModelCache"
         (pdnTextChange)="pdnText = $event"
         (opponentAgentChange)="selectOpponentAgent($event)"
+        (watchBlackAgentChange)="selectWatchAgent('black', $event)"
+        (watchWhiteAgentChange)="selectWatchAgent('white', $event)"
         (startGame)="start()"
+        (restartWatchGame)="restartWatch()"
         (rewindGame)="rewind()"
         (resignGame)="resign()"
         (openReview)="review()"

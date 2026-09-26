@@ -1,6 +1,7 @@
 import {
     AgentProgress,
     AgentTurnContext,
+    isDisposableAgent,
     isInteractiveAgent,
     isPreparableAgent,
     PlayableAgent,
@@ -49,6 +50,8 @@ export class GameSession {
     private starting = false;
     private playingReview = false;
     private agentProgress: AgentProgress | null = null;
+    private destroyed = false;
+    private destroyPromise: Promise<void> | null = null;
 
     constructor(config: GameSessionConfig) {
         if (config.seats.length !== 2) {
@@ -67,7 +70,7 @@ export class GameSession {
 
     async start(): Promise<void> {
         const snapshot = this.engine.getSnapshot();
-        if (this.starting || this.mode !== 'live' || snapshot.phase !== 'ready') {
+        if (this.destroyed || this.starting || this.mode !== 'live' || snapshot.phase !== 'ready') {
             return;
         }
         this.starting = true;
@@ -75,6 +78,9 @@ export class GameSession {
         try {
             await this.prepareAgents();
         } catch (error) {
+            if (this.destroyed) {
+                return;
+            }
             this.starting = false;
             this.agentProgress = null;
             this.renderer.showDiagnostic({
@@ -84,10 +90,16 @@ export class GameSession {
             this.render();
             return;
         }
+        if (this.destroyed) {
+            return;
+        }
         this.agentProgress = null;
         try {
             await this.renderer.animateSetup(this.model(snapshot, EMPTY_SELECTION, true));
         } catch (error) {
+            if (this.destroyed) {
+                return;
+            }
             this.starting = false;
             this.renderer.showDiagnostic({
                 code: 'SETUP_ANIMATION_ERROR',
@@ -96,7 +108,7 @@ export class GameSession {
             this.render();
             return;
         }
-        if (this.mode !== 'live') {
+        if (this.destroyed || this.mode !== 'live') {
             this.starting = false;
             return;
         }
@@ -109,7 +121,7 @@ export class GameSession {
     }
 
     selectSquare(square: number): void {
-        if (this.mode !== 'live') {
+        if (this.destroyed || this.mode !== 'live') {
             return;
         }
         const seat = this.activeSeat();
@@ -211,14 +223,23 @@ export class GameSession {
         return this.engine.getSnapshot();
     }
 
-    destroy(): void {
+    destroy(): Promise<void> {
+        if (this.destroyPromise) {
+            return this.destroyPromise;
+        }
+        this.destroyed = true;
+        this.starting = false;
         this.playingReview = false;
         this.cancelPendingTurn();
         this.playback.dispose();
+        this.destroyPromise = Promise.all(this.seats.map((seat) => isDisposableAgent(seat.agent)
+            ? Promise.resolve(seat.agent.dispose())
+            : Promise.resolve())).then(() => undefined);
+        return this.destroyPromise;
     }
 
     private dispatchTurn(): void {
-        if (this.mode !== 'live') {
+        if (this.destroyed || this.mode !== 'live') {
             return;
         }
         const snapshot = this.engine.getSnapshot();
@@ -241,7 +262,7 @@ export class GameSession {
             legalMoves: snapshot.legalMoves,
             simulation: this.engine.createSimulationSeed(),
             reportProgress: (progress) => {
-                if (!cancellation.cancelled && this.pendingCancellation === cancellation) {
+                if (!this.destroyed && !cancellation.cancelled && this.pendingCancellation === cancellation) {
                     this.agentProgress = progress;
                     this.render();
                 }
@@ -267,7 +288,7 @@ export class GameSession {
             if (wait > 0) {
                 await this.delay(wait);
             }
-            if (cancellation.cancelled || this.mode !== 'live'
+            if (this.destroyed || cancellation.cancelled || this.mode !== 'live'
                 || this.engine.getSnapshot().revision !== context.revision) {
                 return;
             }
@@ -286,7 +307,7 @@ export class GameSession {
             this.dispatchTurn();
         }).catch((error) => {
             this.agentProgress = null;
-            if (cancellation.cancelled) {
+            if (this.destroyed || cancellation.cancelled) {
                 return;
             }
             this.pendingCancellation = null;
@@ -299,17 +320,19 @@ export class GameSession {
     }
 
     private async prepareAgents(): Promise<void> {
-        const preparations: Array<Promise<void>> = this.seats
-            .filter((seat) => isPreparableAgent(seat.agent))
-            .map((seat) => isPreparableAgent(seat.agent)
-                ? seat.agent.prepare((progress: AgentProgress) => {
-                    if (this.starting) {
+        for (const seat of this.seats) {
+            if (this.destroyed) {
+                return;
+            }
+            if (isPreparableAgent(seat.agent)) {
+                await seat.agent.prepare((progress: AgentProgress) => {
+                    if (!this.destroyed && this.starting) {
                         this.agentProgress = progress;
                         this.render();
                     }
-                })
-                : Promise.resolve());
-        await Promise.all(preparations);
+                });
+            }
+        }
     }
 
     private handleImmediateResult(result: CommandResult): void {
@@ -336,6 +359,9 @@ export class GameSession {
     }
 
     private render(): void {
+        if (this.destroyed) {
+            return;
+        }
         this.renderer.render(this.currentModel());
     }
 

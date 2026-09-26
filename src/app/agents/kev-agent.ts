@@ -1,5 +1,5 @@
 import { AgentProgress } from './agent-api';
-import { loadExclusiveSystemOneClient, loadSystemOneBrowserModules } from './system-one-browser';
+import { acquireSystemOneClient, loadSystemOneBrowserModules, SystemOneClientLease } from './system-one-browser';
 import {
     SYSTEM_ONE_MOVE_LIMIT,
     SystemOneAgent,
@@ -61,8 +61,8 @@ function createDefaultClient(reportProgress?: (progress: AgentProgress) => void)
     ));
 }
 
-function loadDefaultClient(reportProgress?: (progress: AgentProgress) => void): Promise<KevSystemOneClient> {
-    return loadExclusiveSystemOneClient('kev:q8f32', createDefaultClient, reportProgress) as Promise<KevSystemOneClient>;
+function acquireDefaultClient(reportProgress?: (progress: AgentProgress) => void): Promise<SystemOneClientLease> {
+    return acquireSystemOneClient('kev:q8f32', createDefaultClient, reportProgress);
 }
 
 function kevConfig(options: KevAgentOptions): SystemOneAgentConfig {
@@ -74,7 +74,7 @@ function kevConfig(options: KevAgentOptions): SystemOneAgentConfig {
         ...options,
         modelLabel: 'Kev',
         defaultMoveLimit: KEV_MOVE_LIMIT,
-        loadClient: options.loadClient || loadDefaultClient
+        acquireClient: options.acquireClient || (options.client || options.loadClient ? undefined : acquireDefaultClient)
     };
 }
 

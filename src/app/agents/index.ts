@@ -9,4 +9,5 @@ export * from './openthai-agent';
 export * from './random-bot';
 export * from './random-source';
 export * from './system-one-agent';
+export { clearSystemOneModelCache } from './system-one-browser';
 export { DEFAULT_SEARCH_DEPTH, SearchAgentOptions, SearchStatistics } from './search-agent-support';

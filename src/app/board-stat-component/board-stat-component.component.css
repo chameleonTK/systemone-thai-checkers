@@ -107,6 +107,23 @@
     font-weight: bold;
 }
 
+.watch-controls {
+    text-align: left;
+}
+
+.watch-controls label {
+    display: block;
+    font-size: 13px;
+    margin: 8px 0 3px;
+}
+
+.watch-controls select {
+    box-sizing: border-box;
+    margin-bottom: 6px;
+    padding: 7px;
+    width: 100%;
+}
+
 .pdn-panel {
     margin: 10px;
     text-align: left;

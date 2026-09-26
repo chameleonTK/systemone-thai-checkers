@@ -10,6 +10,7 @@ import { RandomBot } from './random-bot';
 export interface AgentRegistration {
     readonly id: string;
     readonly label: string;
+    readonly kind: 'human' | 'automated';
     readonly create: () => PlayableAgent;
     readonly minimumResponseDelayMs?: number;
 }
@@ -17,26 +18,35 @@ export interface AgentRegistration {
 export const DEFAULT_AGENT_ID = 'human';
 
 export const AGENT_REGISTRY: ReadonlyArray<AgentRegistration> = Object.freeze([
-    Object.freeze({ id: DEFAULT_AGENT_ID, label: 'Human Agent', create: () => new HumanAgent() }),
-    Object.freeze({ id: 'random', label: 'Random Agent', create: () => new RandomBot(), minimumResponseDelayMs: 500 }),
-    Object.freeze({ id: 'kev', label: 'System One [Kev] Agent', create: () => new KevAgent(), minimumResponseDelayMs: 500 }),
+    Object.freeze({ id: DEFAULT_AGENT_ID, label: 'Human Agent', kind: 'human', create: () => new HumanAgent() }),
+    Object.freeze({
+        id: 'random', label: 'Random Agent', kind: 'automated', create: () => new RandomBot(), minimumResponseDelayMs: 500
+    }),
+    Object.freeze({
+        id: 'minimax', label: 'Minimax Agent', kind: 'automated', create: () => new MinimaxAgent(), minimumResponseDelayMs: 500
+    }),
+    Object.freeze({
+        id: 'alpha-beta',
+        label: 'Minimax with Alpha-Beta Pruning Agent',
+        kind: 'automated',
+        create: () => new AlphaBetaAgent(),
+        minimumResponseDelayMs: 500
+    }),
+    Object.freeze({
+        id: 'kev', label: 'System One [Kev] Agent', kind: 'automated', create: () => new KevAgent(), minimumResponseDelayMs: 500
+    }),
     Object.freeze({
         id: 'laya',
         label: 'System One [Laya] Agent',
+        kind: 'automated',
         create: () => new LayaAgent({ precision: 'int8' }),
         minimumResponseDelayMs: 500
     }),
     Object.freeze({
         id: 'openthai-onnx',
         label: 'System One [OpenThai ONNX] Agent',
+        kind: 'automated',
         create: () => new OpenThaiAgent({ precision: 'int8' }),
-        minimumResponseDelayMs: 500
-    }),
-    Object.freeze({ id: 'minimax', label: 'Minimax Agent', create: () => new MinimaxAgent(), minimumResponseDelayMs: 500 }),
-    Object.freeze({
-        id: 'alpha-beta',
-        label: 'Minimax with Alpha-Beta Pruning Agent',
-        create: () => new AlphaBetaAgent(),
         minimumResponseDelayMs: 500
     })
 ]);

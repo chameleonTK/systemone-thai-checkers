@@ -1,5 +1,5 @@
 import { AgentProgress } from './agent-api';
-import { loadExclusiveSystemOneClient, loadSystemOneBrowserModules } from './system-one-browser';
+import { acquireSystemOneClient, loadSystemOneBrowserModules, SystemOneClientLease } from './system-one-browser';
 import { createLayaSystemOneClient } from './system-one-model-client';
 import {
     SystemOneAgent,
@@ -15,11 +15,11 @@ export interface LayaAgentOptions extends SystemOneAgentOptions {
     readonly precision?: SystemOnePrecision;
 }
 
-function loadDefaultClient(
+function acquireDefaultClient(
     precision: SystemOnePrecision,
     reportProgress?: (progress: AgentProgress) => void
-): Promise<SystemOneClient> {
-    return loadExclusiveSystemOneClient(`laya:${precision}`, async (report) => {
+): Promise<SystemOneClientLease> {
+    return acquireSystemOneClient(`laya:${precision}`, async (report) => {
         if (report) {
             report({ label: 'Loading Laya runtime', loaded: 0, total: 100 });
         }
@@ -37,7 +37,9 @@ export class LayaAgent extends SystemOneAgent {
             ...options,
             modelLabel: 'Laya',
             defaultMoveLimit: LAYA_MOVE_LIMIT,
-            loadClient: options.loadClient || ((report) => loadDefaultClient(precision, report))
+            acquireClient: options.acquireClient || (options.client || options.loadClient
+                ? undefined
+                : ((report) => acquireDefaultClient(precision, report)))
         });
         this.precision = precision;
     }

@@ -1,3 +1,47 @@
 .container {
     margin-top: 30px;
 }
+
+.board-column {
+    display: inline-block;
+    vertical-align: top;
+}
+
+.mode-switch {
+    display: flex;
+    margin-bottom: 8px;
+    width: max-content;
+}
+
+.mode-switch button {
+    background: #fff;
+    border: 1px solid #444;
+    cursor: pointer;
+    min-width: 76px;
+    padding: 8px 14px;
+}
+
+.mode-switch button + button {
+    border-left: 0;
+}
+
+.mode-switch button.active {
+    background: #444;
+    color: #fff;
+}
+
+.mode-switch .btn-clear-cache {
+    border-left: 1px solid #444;
+    margin-left: 8px;
+    min-width: auto;
+    /* padding-left: 9px;
+    padding-right: 9px; */
+
+    border: 0;
+    padding-left: 0px;
+}
+
+.mode-switch .btn-clear-cache:disabled {
+    cursor: wait;
+    opacity: 0.45;
+}

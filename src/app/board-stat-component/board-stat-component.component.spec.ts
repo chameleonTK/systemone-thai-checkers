@@ -57,6 +57,30 @@ describe('BoardStatComponentComponent', () => {
         expect(component.playerType(white)).toBe('Minimax Agent');
     });
 
+    it('shows both selected agent types in Watch mode and emits seat changes', () => {
+        const component = new BoardStatComponentComponent();
+        const black = {
+            id: 'black' as const, name: 'Player 1', color: '#444', active: false, manCount: 8, kingCount: 0
+        };
+        const white = {
+            id: 'white' as const, name: 'Player 2', color: '#e66', active: false, manCount: 8, kingCount: 0
+        };
+        component.model = { players: [black, white] } as any;
+        component.gameMode = 'watch';
+        component.agentOptions = AGENT_REGISTRY;
+        component.selectedWatchBlackAgentId = 'random';
+        component.selectedWatchWhiteAgentId = 'alpha-beta';
+
+        expect(component.playerType(black)).toBe('Random Agent');
+        expect(component.playerType(white)).toBe('Minimax with Alpha-Beta Pruning Agent');
+        spyOn(component.watchBlackAgentChange, 'emit');
+        spyOn(component.watchWhiteAgentChange, 'emit');
+        component.watchBlackAgentChange.emit('minimax');
+        component.watchWhiteAgentChange.emit('random');
+        expect(component.watchBlackAgentChange.emit).toHaveBeenCalledWith('minimax');
+        expect(component.watchWhiteAgentChange.emit).toHaveBeenCalledWith('random');
+    });
+
     it('calculates bounded model-loading progress and supports an indeterminate state', () => {
         const component = new BoardStatComponentComponent();
         component.model = { agentProgress: { label: 'Loading Kev model' } } as any;

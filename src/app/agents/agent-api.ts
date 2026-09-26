@@ -59,6 +59,10 @@ export interface PreparableAgent extends PlayableAgent {
     prepare(reportProgress: (progress: AgentProgress) => void): Promise<void>;
 }
 
+export interface DisposableAgent extends PlayableAgent {
+    dispose(): Promise<void> | void;
+}
+
 export interface SelectionState {
     readonly selectedSquare: number | null;
     readonly highlightedSquares: ReadonlyArray<number>;
@@ -75,4 +79,8 @@ export function isInteractiveAgent(agent: PlayableAgent): agent is InteractiveAg
 
 export function isPreparableAgent(agent: PlayableAgent): agent is PreparableAgent {
     return typeof (agent as PreparableAgent).prepare === 'function';
+}
+
+export function isDisposableAgent(agent: PlayableAgent): agent is DisposableAgent {
+    return typeof (agent as DisposableAgent).dispose === 'function';
 }

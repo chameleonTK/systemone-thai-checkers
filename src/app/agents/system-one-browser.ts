@@ -7,13 +7,24 @@ export interface SystemOneBrowserModules {
     readonly Tokenizer: any;
 }
 
-interface ActiveClient {
-    readonly key: string;
+export interface SystemOneClientLease {
+    readonly client: SystemOneClient;
+    release(): Promise<void>;
+}
+
+interface PooledClient {
     readonly promise: Promise<SystemOneClient>;
+    references: number;
+    closing?: Promise<void>;
 }
 
 let modulesPromise: Promise<SystemOneBrowserModules> | null = null;
-let activeClient: ActiveClient | null = null;
+const clientPool: { [key: string]: PooledClient } = {};
+const MODEL_URL_MARKERS: ReadonlyArray<string> = Object.freeze([
+    'huggingface.co/ai-ecoverse/kev.js/',
+    'huggingface.co/techtheist/laya-onnx/',
+    'huggingface.co/imtk/OpenThai-SystemOne-ONNX/'
+]);
 
 export function loadSystemOneBrowserModules(): Promise<SystemOneBrowserModules> {
     const browserWindow: any = window;
@@ -38,43 +49,103 @@ export function loadSystemOneBrowserModules(): Promise<SystemOneBrowserModules> 
     return modulesPromise;
 }
 
-export function loadExclusiveSystemOneClient(
+export async function acquireSystemOneClient(
     key: string,
     create: (reportProgress?: (progress: AgentProgress) => void) => Promise<SystemOneClient>,
     reportProgress?: (progress: AgentProgress) => void
-): Promise<SystemOneClient> {
-    if (activeClient && activeClient.key === key) {
-        return activeClient.promise;
+): Promise<SystemOneClientLease> {
+    const existing: PooledClient | undefined = clientPool[key];
+    if (existing && existing.closing) {
+        await existing.closing;
+        return acquireSystemOneClient(key, create, reportProgress);
     }
-    const previous: ActiveClient | null = activeClient;
-    const promise: Promise<SystemOneClient> = (async () => {
-        if (previous) {
-            try {
-                const client: SystemOneClient = await previous.promise;
-                if (client.release) {
-                    await client.release();
-                }
-            } catch {
-                // A failed previous load owns no usable resources.
+
+    let entry: PooledClient;
+    if (existing) {
+        entry = existing;
+    } else {
+        const promise: Promise<SystemOneClient> = Promise.resolve().then(() => create(reportProgress));
+        entry = { promise, references: 0 };
+        clientPool[key] = entry;
+        promise.catch(() => {
+            if (clientPool[key] === entry) {
+                delete clientPool[key];
             }
-        }
-        return create(reportProgress);
-    })();
-    activeClient = { key, promise };
-    return promise.catch((error: unknown) => {
-        if (activeClient && activeClient.promise === promise) {
-            activeClient = null;
-        }
+        });
+    }
+    entry.references += 1;
+
+    try {
+        const client: SystemOneClient = await entry.promise;
+        let released = false;
+        return {
+            client,
+            release: async () => {
+                if (released) {
+                    return;
+                }
+                released = true;
+                entry.references -= 1;
+                if (entry.references > 0 || entry.closing) {
+                    return;
+                }
+                entry.closing = entry.promise.then(async (loaded: SystemOneClient) => {
+                    if (loaded.release) {
+                        await loaded.release();
+                    }
+                }).finally(() => {
+                    if (clientPool[key] === entry) {
+                        delete clientPool[key];
+                    }
+                });
+                await entry.closing;
+            }
+        };
+    } catch (error) {
+        entry.references -= 1;
         throw error;
-    });
+    }
 }
 
 export function resetSystemOneClientPool(): Promise<void> {
-    const previous: ActiveClient | null = activeClient;
-    activeClient = null;
-    if (!previous) {
-        return Promise.resolve();
+    const entries: PooledClient[] = Object.keys(clientPool).map((key: string) => {
+        const entry: PooledClient = clientPool[key];
+        delete clientPool[key];
+        return entry;
+    });
+    return Promise.all(entries.map(async (entry: PooledClient) => {
+        try {
+            const client: SystemOneClient = await entry.promise;
+            if (client.release) {
+                await client.release();
+            }
+        } catch {
+            // A failed load owns no usable resources.
+        }
+    })).then(() => undefined);
+}
+
+export async function clearSystemOneModelCache(): Promise<number> {
+    await resetSystemOneClientPool();
+    if (typeof caches === 'undefined') {
+        return 0;
     }
-    return previous.promise.then((client: SystemOneClient) => client.release ? client.release() : undefined)
-        .catch(() => undefined);
+    let removed = 0;
+    const names: string[] = await caches.keys();
+    for (const name of names) {
+        const cache: Cache = await caches.open(name);
+        const requests: ReadonlyArray<Request> = await cache.keys();
+        let removedFromCache = false;
+        for (const request of requests) {
+            if (MODEL_URL_MARKERS.some((marker: string) => request.url.indexOf(marker) !== -1)
+                && await cache.delete(request)) {
+                removed += 1;
+                removedFromCache = true;
+            }
+        }
+        if (removedFromCache && (await cache.keys()).length === 0) {
+            await caches.delete(name);
+        }
+    }
+    return removed;
 }

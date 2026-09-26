@@ -1,6 +1,7 @@
 import { GameSnapshot, MoveIntent, MoveOption } from '../engine';
-import { AgentProgress, AgentTurnContext, PreparableAgent, TurnCancellation } from './agent-api';
+import { AgentProgress, AgentTurnContext, DisposableAgent, PreparableAgent, TurnCancellation } from './agent-api';
 import { MathRandomSource, RandomSource } from './random-source';
+import { SystemOneClientLease } from './system-one-browser';
 
 export const SYSTEM_ONE_MOVE_LIMIT = 128;
 
@@ -25,6 +26,7 @@ export interface SystemOneClient {
 export interface SystemOneAgentOptions {
     readonly client?: SystemOneClient;
     readonly loadClient?: (reportProgress?: (progress: AgentProgress) => void) => Promise<SystemOneClient>;
+    readonly acquireClient?: (reportProgress?: (progress: AgentProgress) => void) => Promise<SystemOneClientLease>;
     readonly random?: RandomSource;
     readonly moveLimit?: number;
 }
@@ -68,12 +70,13 @@ function boardState(snapshot: GameSnapshot): unknown {
     };
 }
 
-export class SystemOneAgent implements PreparableAgent {
-    private readonly loadClient: (reportProgress?: (progress: AgentProgress) => void) => Promise<SystemOneClient>;
+export class SystemOneAgent implements PreparableAgent, DisposableAgent {
+    private readonly acquireClient: (reportProgress?: (progress: AgentProgress) => void) => Promise<SystemOneClientLease>;
     private readonly random: RandomSource;
     private readonly moveLimit: number;
     private readonly modelLabel: string;
-    private clientPromise: Promise<SystemOneClient> | null = null;
+    private leasePromise: Promise<SystemOneClientLease> | null = null;
+    private disposed = false;
 
     constructor(config: SystemOneAgentConfig) {
         const maximum: number = config.defaultMoveLimit || SYSTEM_ONE_MOVE_LIMIT;
@@ -81,26 +84,42 @@ export class SystemOneAgent implements PreparableAgent {
         if (!Number.isInteger(moveLimit) || moveLimit < 1 || moveLimit > maximum) {
             throw new Error(`System One move limit must be an integer between 1 and ${maximum}.`);
         }
-        this.loadClient = config.client
+        const loadClient = config.client
             ? () => Promise.resolve(config.client as SystemOneClient)
-            : config.loadClient as (reportProgress?: (progress: AgentProgress) => void) => Promise<SystemOneClient>;
-        if (!this.loadClient) {
+            : config.loadClient;
+        const acquireClient = config.acquireClient || (loadClient
+            ? async (reportProgress?: (progress: AgentProgress) => void) => ({
+                client: await loadClient(reportProgress),
+                release: () => Promise.resolve()
+            })
+            : undefined);
+        if (!acquireClient) {
             throw new Error(`${config.modelLabel} client loader is required.`);
         }
+        this.acquireClient = acquireClient;
         this.random = config.random || new MathRandomSource();
         this.moveLimit = moveLimit;
         this.modelLabel = config.modelLabel;
     }
 
     async prepare(reportProgress: (progress: AgentProgress) => void): Promise<void> {
-        if (!this.clientPromise) {
+        if (this.disposed) {
+            throw new Error(`${this.modelLabel} agent was disposed.`);
+        }
+        if (!this.leasePromise) {
             reportProgress({ label: `Loading ${this.modelLabel} model`, loaded: 0, total: 100 });
-            this.clientPromise = this.loadClient(reportProgress).catch((error: unknown) => {
-                this.clientPromise = null;
+            this.leasePromise = this.acquireClient(reportProgress).then(async (lease: SystemOneClientLease) => {
+                if (this.disposed) {
+                    await lease.release();
+                    throw new Error(`${this.modelLabel} agent was disposed.`);
+                }
+                return lease;
+            }).catch((error: unknown) => {
+                this.leasePromise = null;
                 throw error;
             });
         }
-        await this.clientPromise;
+        await this.leasePromise;
     }
 
     async chooseMove(context: AgentTurnContext, cancellation: TurnCancellation): Promise<MoveIntent> {
@@ -118,7 +137,7 @@ export class SystemOneAgent implements PreparableAgent {
             movesByOption[option] = move;
         });
 
-        if (!this.clientPromise) {
+        if (!this.leasePromise) {
             await this.prepare((progress: AgentProgress) => {
                 if (context.reportProgress) {
                     context.reportProgress(progress);
@@ -128,7 +147,8 @@ export class SystemOneAgent implements PreparableAgent {
                 context.reportProgress(null);
             }
         }
-        const client: SystemOneClient = await this.clientPromise as SystemOneClient;
+        const lease: SystemOneClientLease = await this.leasePromise as SystemOneClientLease;
+        const client: SystemOneClient = lease.client;
         if (cancellation.cancelled) {
             throw new Error('Turn was cancelled.');
         }
@@ -155,7 +175,26 @@ export class SystemOneAgent implements PreparableAgent {
         return this.intent(selected);
     }
 
+    async dispose(): Promise<void> {
+        if (this.disposed) {
+            return;
+        }
+        this.disposed = true;
+        if (!this.leasePromise) {
+            return;
+        }
+        try {
+            const lease: SystemOneClientLease = await this.leasePromise;
+            await lease.release();
+        } catch {
+            // Failed or cancelled loading owns no live lease.
+        }
+    }
+
     private assertTurnCanContinue(context: AgentTurnContext, cancellation: TurnCancellation): void {
+        if (this.disposed) {
+            throw new Error(`${this.modelLabel} agent was disposed.`);
+        }
         if (cancellation.cancelled) {
             throw new Error('Turn was cancelled.');
         }

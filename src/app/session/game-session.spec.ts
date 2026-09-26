@@ -68,6 +68,15 @@ class PreparingAgent extends DeferredAgent {
     }
 }
 
+class DisposableDeferredAgent extends DeferredAgent {
+    disposed = false;
+
+    dispose(): Promise<void> {
+        this.disposed = true;
+        return Promise.resolve();
+    }
+}
+
 describe('GameSession', () => {
     async function flush(): Promise<void> {
         await Promise.resolve();
@@ -139,6 +148,44 @@ describe('GameSession', () => {
         expect(session.getLiveSnapshot().pieces).toContain(jasmine.objectContaining({ square: 9, player: 'black' }));
         expect(session.getLiveSnapshot().activePlayer).toBe('white');
         session.destroy();
+    });
+
+    it('automatically dispatches the next automated seat after a move', async () => {
+        const renderer = new TestRenderer();
+        const black = new DeferredAgent();
+        const white = new DeferredAgent();
+        const session = new GameSession({
+            seats: [
+                { player: { id: 'black', name: 'Black', color: '#000' }, agent: black },
+                { player: { id: 'white', name: 'White', color: '#fff' }, agent: white }
+            ], renderer
+        });
+        await session.start();
+        const move = black.context.legalMoves[0];
+        black.resolve({ from: move.from, to: move.to });
+        await flush();
+        expect(white.context.player).toBe('white');
+        session.destroy();
+    });
+
+    it('disposes both seats and prevents a pending preparation from starting the engine', async () => {
+        const renderer = new TestRenderer();
+        const black = new PreparingAgent();
+        const white = new DisposableDeferredAgent();
+        const session = new GameSession({
+            seats: [
+                { player: { id: 'black', name: 'Black', color: '#000' }, agent: black },
+                { player: { id: 'white', name: 'White', color: '#fff' }, agent: white }
+            ], renderer
+        });
+        const starting = session.start();
+        const destroying = session.destroy();
+        black.finishPreparation();
+        await starting;
+        await destroying;
+        expect(session.getLiveSnapshot().phase).toBe('ready');
+        expect(black.context).toBeUndefined();
+        expect(white.disposed).toBeTrue();
     });
 
     it('clears highlights after an impermissible destination', async () => {

@@ -36,6 +36,7 @@ Export the class from `src/app/agents/index.ts`, then add one entry to `AGENT_RE
 Object.freeze({
     id: 'first-legal',
     label: 'First Legal Agent',
+    kind: 'automated',
     create: () => new FirstLegalAgent(),
     minimumResponseDelayMs: 500
 })
@@ -43,6 +44,7 @@ Object.freeze({
 
 - `id` must be unique and stable because the UI stores the current selection by ID.
 - `label` is shown in the Start dropdown and as White's player name.
+- `kind` is `human` for click-driven seats and `automated` for agents that can appear in Watch mode.
 - `create` must return a fresh agent instance so matches do not share pending turns or search state.
 - `minimumResponseDelayMs` is optional presentation pacing; it does not affect search.
 
