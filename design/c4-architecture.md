@@ -31,7 +31,7 @@ flowchart LR
         spa["Container: Angular web application\nAngular 11 / TypeScript\nUI, animation, session orchestration, human input, playback"]
         core["Logical container: Checkers core\nFramework-neutral TypeScript\nPosition, validator, history, engine, search session"]
         sdk["Logical container: Agent SDK\nTypeScript contracts\nPlayableAgent, immutable context, simulation facade"]
-        bots["Container: Agent modules\nHumanAgent, RandomBot, third-party bots"]
+        bots["Container: Agent modules\nHuman, random, minimax, alpha-beta, third-party agents"]
         codec["Logical container: PDN codec\nHeaderless type-31 parser and writer"]
     end
 
@@ -61,7 +61,9 @@ flowchart TB
         session["GameSession\nLifecycle, agent dispatch, cancellation, diagnostics"]
         playback["PlaybackController\nIsolated review engine and timed/step playback"]
         humanAgent["HumanAgent\nSelection and pending move promise"]
-        randomBot["RandomBot\nExample agent"]
+        randomBot["RandomBot\nRandom legal move"]
+        minimaxAgent["MinimaxAgent\nDepth-limited search"]
+        alphaBetaAgent["AlphaBetaAgent\nPruned depth-limited search"]
         pdn["PdnMovetextCodec\nParse, disambiguate, and export"]
     end
 
@@ -94,6 +96,8 @@ flowchart TB
     session --> context
     humanAgent -. implements .-> contract
     randomBot -. implements .-> contract
+    minimaxAgent -. implements .-> contract
+    alphaBetaAgent -. implements .-> contract
     context --> simapi
     simapi --> search
     playback --> pdn

@@ -235,6 +235,16 @@ classDiagram
         -random: RandomSource
         +chooseMove(context, cancellation) Promise~MoveIntent~
     }
+    class MinimaxAgent {
+        -depth: number
+        -random: RandomSource
+        +chooseMove(context, cancellation) Promise~MoveIntent~
+    }
+    class AlphaBetaAgent {
+        -depth: number
+        -random: RandomSource
+        +chooseMove(context, cancellation) Promise~MoveIntent~
+    }
     class AgentTurnContext {
         +turnId: string
         +revision: number
@@ -266,6 +276,8 @@ classDiagram
 
     HumanAgent ..|> PlayableAgent
     RandomBot ..|> PlayableAgent
+    MinimaxAgent ..|> PlayableAgent
+    AlphaBetaAgent ..|> PlayableAgent
     PlayableAgent --> AgentTurnContext
     PlayableAgent --> TurnCancellation
     AgentTurnContext *-- SimulationSeed

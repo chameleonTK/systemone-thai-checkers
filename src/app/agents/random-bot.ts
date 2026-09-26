@@ -1,15 +1,6 @@
 import { MoveIntent } from '../engine';
 import { AgentTurnContext, PlayableAgent, TurnCancellation } from './agent-api';
-
-export interface RandomSource {
-    next(): number;
-}
-
-export class MathRandomSource implements RandomSource {
-    next(): number {
-        return Math.random();
-    }
-}
+import { MathRandomSource, RandomSource } from './random-source';
 
 export class RandomBot implements PlayableAgent {
     constructor(private readonly random: RandomSource = new MathRandomSource()) {}

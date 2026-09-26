@@ -22,7 +22,22 @@
     <div class="diagnostic" *ngIf="diagnostic">{{diagnostic}}</div>
 
     <div class="controls" *ngIf="model.mode === 'live'">
-        <button class="btn btn-start" type="button" (click)="startGame.emit()" [disabled]="!model.controls.canStart">Start</button>
+        <div class="start-split">
+            <button class="btn btn-start" type="button" (click)="startGame.emit()"
+                [disabled]="!model.controls.canStart || model.setupAnimating">
+                Start vs {{selectedAgentLabel()}}
+            </button>
+            <button class="btn btn-agent-menu" type="button" [matMenuTriggerFor]="agentMenu"
+                [disabled]="!model.controls.canStart || model.setupAnimating" aria-label="Choose opponent agent">
+                &#9662;
+            </button>
+        </div>
+        <mat-menu #agentMenu="matMenu">
+            <button mat-menu-item type="button" *ngFor="let agent of agentOptions"
+                (click)="opponentAgentChange.emit(agent.id)" [class.selected-agent]="agent.id === selectedAgentId">
+                {{agent.label}}
+            </button>
+        </mat-menu>
         <button class="btn btn-rewind" type="button" (click)="rewindGame.emit()" [disabled]="!model.controls.canRewind">Rewind</button>
         <button class="btn btn-giveup" type="button" (click)="resignGame.emit()" [disabled]="!model.controls.canResign">Give Up</button>
     </div>

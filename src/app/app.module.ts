@@ -8,6 +8,7 @@ import { BoardStatComponentComponent } from './board-stat-component/board-stat-c
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { MatDialogModule } from '@angular/material/dialog';
+import { MatMenuModule } from '@angular/material/menu';
 import { FormsModule } from '@angular/forms';
 
 @NgModule({
@@ -23,6 +24,7 @@ import { FormsModule } from '@angular/forms';
     BrowserAnimationsModule,
     FontAwesomeModule,
     MatDialogModule,
+    MatMenuModule,
     FormsModule
   ],
   providers: [],

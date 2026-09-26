@@ -96,6 +96,11 @@ This checklist is the human-readable acceptance list for the redesigned engine. 
 - [x] Selecting a permissible destination submits exactly one atomic step.
 - [x] Cancellation clears pending human input.
 - [x] The random bot is deterministic with an injected random source and uses only the public context.
+- [x] Minimax and alpha-beta use configurable completed-turn depth, preserve forced continuations, and agree on deterministic fixtures.
+- [x] Alpha-beta visits fewer nodes and records pruned branches on a branching fixture.
+- [x] Equal best search moves use injectable randomness, while terminal wins dominate material evaluation.
+- [x] Agent registry IDs are unique and every factory returns a fresh independent instance.
+- [x] The Start split button defaults to Human Agent and configures White without starting the game early.
 - [x] Setup animation completes before engine activation and Black dispatch.
 - [x] A failed setup animation leaves the engine ready and surfaces a diagnostic.
 - [x] Illegal bot output leaves state unchanged, emits a diagnostic, and redispatches the turn.

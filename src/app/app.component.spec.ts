@@ -1,5 +1,5 @@
 import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { AppComponent } from './app.component';
 
@@ -27,6 +27,26 @@ describe('AppComponent', () => {
     it('retains the application title', () => {
         expect(fixture.componentInstance.title).toBe('app');
     });
+
+    it('defaults to Human Agent and changes the opponent without starting', () => {
+        const app = fixture.componentInstance;
+        expect(app.selectedAgentId).toBe('human');
+        app.selectOpponentAgent('minimax');
+        expect(app.selectedAgent.label).toBe('Minimax Agent');
+        expect(app.model.phase).toBe('ready');
+    });
+
+    it('starts with a fresh instance of the selected White agent', fakeAsync(() => {
+        const app = fixture.componentInstance;
+        app.selectOpponentAgent('alpha-beta');
+        app.start();
+        expect(app.model.setupAnimating).toBeTrue();
+        expect(app.model.players[1].name).toBe('Minimax with Alpha-Beta Pruning Agent');
+        tick(600);
+        expect(app.model.phase).toBe('active');
+        expect(app.model.controls.canStart).toBeFalse();
+        app.ngOnDestroy();
+    }));
 
     it('shows PDN diagnostics without replacing the live model', () => {
         const app = fixture.componentInstance;

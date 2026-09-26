@@ -67,7 +67,9 @@ This document inventories the behavior implemented by the redesigned Thai checke
 
 - Defines an asynchronous `PlayableAgent.chooseMove(context, cancellation)` contract for humans and bots.
 - Supplies immutable public state, legal moves, history, counters, revision, turn ID, and a copied simulation seed.
-- Includes a click-driven `HumanAgent` and a `RandomBot` with injectable randomness.
+- Includes a click-driven `HumanAgent`, a `RandomBot`, `MinimaxAgent`, and `AlphaBetaAgent`, with injectable randomness for stable tests.
+- Registers independent agents through one factory-based registry and exposes them in a split Start/opponent control.
+- Searches a configurable number of completed turns (four by default), preserving forced multi-jumps within the same depth.
 - Keeps player identity/state separate from agent behavior, so either seat may bind any agent implementation.
 - Cancels pending work after rewind, resignation, review entry, session destruction, or a completed turn.
 - Ignores delayed responses and safely reports illegal or failed agents without manufacturing a rules result.

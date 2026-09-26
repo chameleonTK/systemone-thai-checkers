@@ -1,4 +1,5 @@
 import { BoardStatComponentComponent } from './board-stat-component.component';
+import { AGENT_REGISTRY } from '../agents';
 
 describe('BoardStatComponentComponent', () => {
     it('preserves translated labels', () => {
@@ -23,5 +24,15 @@ describe('BoardStatComponentComponent', () => {
         spyOn(component.pdnTextChange, 'emit');
         component.updatePdn('5-9 *');
         expect(component.pdnTextChange.emit).toHaveBeenCalledWith('5-9 *');
+    });
+
+    it('shows the selected registered agent and emits opponent changes', () => {
+        const component = new BoardStatComponentComponent();
+        component.agentOptions = AGENT_REGISTRY;
+        component.selectedAgentId = 'human';
+        expect(component.selectedAgentLabel()).toBe('Human Agent');
+        spyOn(component.opponentAgentChange, 'emit');
+        component.opponentAgentChange.emit('alpha-beta');
+        expect(component.opponentAgentChange.emit).toHaveBeenCalledWith('alpha-beta');
     });
 });

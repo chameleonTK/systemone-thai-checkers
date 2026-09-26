@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { AgentRegistration } from '../agents';
 import { Lang } from '../Lang';
 import { GameViewModel, PlayerView } from '../presentation';
 
@@ -11,7 +12,10 @@ export class BoardStatComponentComponent {
     @Input() model: GameViewModel;
     @Input() pdnText = '';
     @Input() diagnostic = '';
+    @Input() agentOptions: ReadonlyArray<AgentRegistration> = [];
+    @Input() selectedAgentId = '';
     @Output() pdnTextChange = new EventEmitter<string>();
+    @Output() opponentAgentChange = new EventEmitter<string>();
     @Output() startGame = new EventEmitter<void>();
     @Output() rewindGame = new EventEmitter<void>();
     @Output() resignGame = new EventEmitter<void>();
@@ -37,5 +41,10 @@ export class BoardStatComponentComponent {
 
     updatePdn(value: string): void {
         this.pdnTextChange.emit(value);
+    }
+
+    selectedAgentLabel(): string {
+        const selected = this.agentOptions.find((agent) => agent.id === this.selectedAgentId);
+        return selected ? selected.label : 'Human Agent';
     }
 }

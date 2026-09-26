@@ -1,6 +1,12 @@
 import { Component, Inject, OnDestroy } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
-import { HumanAgent } from './agents';
+import {
+    AGENT_REGISTRY,
+    AgentRegistration,
+    DEFAULT_AGENT_ID,
+    findAgentRegistration,
+    HumanAgent
+} from './agents';
 import { GameViewModel, SessionDiagnostic } from './presentation';
 import { GameSession, RendererPort } from './session';
 
@@ -24,17 +30,18 @@ export class AppComponent implements RendererPort, OnDestroy {
     model: GameViewModel;
     pdnText = '';
     diagnostic = '';
-    private readonly session: GameSession;
+    readonly agentOptions = AGENT_REGISTRY;
+    selectedAgentId = DEFAULT_AGENT_ID;
+    private session: GameSession;
     private shownEndRevision = -1;
 
     constructor(public dialog: MatDialog) {
-        this.session = new GameSession({
-            seats: [
-                { player: { id: 'black', name: 'Player 1', color: '#444444' }, agent: new HumanAgent() },
-                { player: { id: 'white', name: 'Player 2', color: '#e26b6b' }, agent: new HumanAgent() }
-            ],
-            renderer: this
-        });
+        this.session = this.createSession(this.selectedAgent);
+    }
+
+    get selectedAgent(): AgentRegistration {
+        return findAgentRegistration(this.selectedAgentId)
+            || findAgentRegistration(DEFAULT_AGENT_ID) as AgentRegistration;
     }
 
     render(model: GameViewModel): void {
@@ -43,6 +50,20 @@ export class AppComponent implements RendererPort, OnDestroy {
             this.shownEndRevision = model.revision;
             this.openDialog('Game Over', model.resultText);
         }
+    }
+
+    private createSession(opponent: AgentRegistration): GameSession {
+        return new GameSession({
+            seats: [
+                { player: { id: 'black', name: 'Player 1', color: '#444444' }, agent: new HumanAgent() },
+                {
+                    player: { id: 'white', name: opponent.label, color: '#e26b6b' },
+                    agent: opponent.create(),
+                    minimumResponseDelayMs: opponent.minimumResponseDelayMs
+                }
+            ],
+            renderer: this
+        });
     }
 
     animateSetup(model: GameViewModel): Promise<void> {
@@ -61,7 +82,19 @@ export class AppComponent implements RendererPort, OnDestroy {
 
     start(): void {
         this.diagnostic = '';
+        if (!this.model.controls.canStart || this.model.setupAnimating) {
+            return;
+        }
+        this.session.destroy();
+        this.session = this.createSession(this.selectedAgent);
         this.session.start();
+    }
+
+    selectOpponentAgent(id: string): void {
+        if (!this.model.controls.canStart || this.model.setupAnimating || !findAgentRegistration(id)) {
+            return;
+        }
+        this.selectedAgentId = id;
     }
 
     selectSquare(square: number): void {
