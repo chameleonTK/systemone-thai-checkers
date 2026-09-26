@@ -1,0 +1,35 @@
+<div class="container">
+    <h1 class="title">{{txt("หมากฮอส")}}</h1>
+    <h2> {{txt("ตาที่")}} {{game.getTurnIndex()}}</h2>
+    <div class="desc" id="desc-player1" 
+        [style.background-color]="getBackgroundColor(player1)"
+        [style.color]="getTextColor(player1)">
+        <div class="desc-name">{{txt("ผู้เล่น")}} 1</div>
+        <ul class="desc-token">
+            <li>{{txt("อัศวิน")}}: <span class="knight">{{player1.getNKnight()}}</span> {{txt("ตัว")}}</li>
+            <li>{{txt("คิง")}}: <span class="king">{{player1.getNKing()}}</span> {{txt("ตัว")}}</li>
+        </ul>
+    </div>
+
+    <div class="desc" id="desc-player2"
+        [style.background-color]="getBackgroundColor(player2)"
+        [style.color]="getTextColor(player2)">
+        <div class="desc-name">{{txt("ผู้เล่น")}} 2</div>
+        <ul class="desc-token">
+            <li>{{txt("อัศวิน")}}: <span class="knight">{{player2.getNKnight()}}</span> {{txt("ตัว")}}</li>
+            <li>{{txt("คิง")}}: <span class="king">{{player2.getNKing()}}</span> {{txt("ตัว")}}</li>
+        </ul>
+    </div>
+
+    <!-- <fa-icon [icon]="faKing"></fa-icon> -->
+    <div class="desc records" >
+        <div *ngFor="let record of game.logger.getRecords(); let i = index" class="record">
+            <span style="padding-left: 10px;">{{record}}</span> 
+            
+        </div>
+    </div>
+    <div style="margin: 0px 10px;" >
+        <button class="btn btn-redo" type="button" (click)="redo()">Redo</button>
+        <button class="btn btn-giveup" type="button" (click)="giveup()">Give Up</button>
+    </div>
+</div>

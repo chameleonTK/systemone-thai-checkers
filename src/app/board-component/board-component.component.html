@@ -1,0 +1,20 @@
+<div class="container" style="border: 1px solid #eee;">
+    <div *ngFor="let row of tiles; let i = index" class="tiles" [ngClass]="getRowTileClassName(i)">
+        <div *ngFor="let tile of row; let j = index" 
+            class="tile" 
+            (click)="onClickTile(tile)"
+            [ngClass]="getClassTile(tile)"
+            [style]="getStyleTile(tile)">
+            
+        </div>
+    </div>
+
+    <div *ngFor="let token of tokens; let i = index" class="token"
+        [ngClass]="getClassToken(token)"
+        (click)="onClickToken(token)"
+        [style]="getStyleToken(token)">    
+        <div class="token-inner" [style]="getInnerStyleToken(token)"> </div>
+
+        
+    </div>
+</div>

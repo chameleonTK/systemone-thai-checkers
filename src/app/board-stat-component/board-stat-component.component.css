@@ -1,0 +1,76 @@
+.container {
+    display: inline-block;
+    vertical-align: top;
+    padding-left: 30px;
+}
+
+.container > .title {
+    margin-top: 0px;
+    margin-bottom: 0px;
+    margin-left: 10px;
+    text-align: left;
+}
+
+.container > .title+h2 {
+    margin-top: 0px;
+    margin-bottom: 0px;
+    margin-left: 10px;
+    text-align: left;
+
+    /* font-size: ; */
+}
+
+.container > .desc{
+    text-align: left;
+    border: 1px solid;
+    padding: 10px;
+    margin: 10px;
+    min-width: 150px;
+}
+
+.container .desc-name{
+    text-align: left;
+    font-size: 20px;
+}
+
+.container .desc-token{
+    padding-left: 25px;
+    margin: 8px 0px;
+}
+
+.container .records {
+    height: 100px !important;
+    overflow-y: scroll;
+    padding: 0px;
+}
+
+.container .records .record{
+    text-align: left;
+}
+
+.desc.records .record:nth-child(odd) {
+    background-color: #eee;
+}
+
+.btn {
+    background: none;
+    border: 1px solid;
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 5px;
+    cursor: pointer;
+}
+
+.btn:active,
+.btn:hover {
+    background-color: rgb(68, 68, 68, 0.8);
+    color: rgb(255, 255, 255);
+}
+
+/* .btn-redo {
+    
+}
+
+.btn-giveup {
+    
+} */
