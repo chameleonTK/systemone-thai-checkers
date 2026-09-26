@@ -12,7 +12,7 @@ describe('BoardComponentComponent', () => {
         spyOn(component.squareClick, 'emit');
         component.onClickTile(component.board.tiles[2][0]);
         component.onClickPiece(component.board.pieces[0]);
-        expect(component.squareClick.emit).toHaveBeenCalledWith(9);
+        expect(component.squareClick.emit).toHaveBeenCalledWith(24);
         expect(component.squareClick.emit).toHaveBeenCalledWith(1);
     });
 

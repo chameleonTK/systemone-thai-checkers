@@ -12,6 +12,10 @@ describe('GamePresenter', () => {
         expect(model.board.tiles.length).toBe(8);
         expect(model.board.tiles.every((row) => row.length === 8)).toBeTrue();
         expect(model.board.pieces.length).toBe(16);
+        const playerOnePieces = model.board.pieces.filter((piece) => piece.player === 'black');
+        const playerTwoPieces = model.board.pieces.filter((piece) => piece.player === 'white');
+        expect(playerOnePieces.every((piece) => piece.row >= 6)).toBeTrue();
+        expect(playerTwoPieces.every((piece) => piece.row <= 1)).toBeTrue();
         expect(model.controls.canStart).toBeTrue();
     });
 
@@ -23,7 +27,7 @@ describe('GamePresenter', () => {
             mode: 'live', selection: { selectedSquare: 5, highlightedSquares: [9] }
         });
         expect(model.board.pieces.find((piece) => piece.square === 5).selected).toBeTrue();
-        expect(model.board.tiles[2][0].highlighted).toBeTrue();
+        expect(model.board.tiles[5][7].highlighted).toBeTrue();
         expect(snapshot.pieces.some((piece) => (piece as any).selected)).toBeFalse();
     });
 

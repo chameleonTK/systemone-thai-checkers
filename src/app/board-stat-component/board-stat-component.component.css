@@ -36,9 +36,17 @@
     font-size: 20px;
 }
 
+.container .desc-type {
+    overflow-wrap: anywhere;
+    text-align: left;
+}
+
 .container .desc-token{
-    padding-left: 25px;
-    margin: 8px 0px;
+    margin-top: 8px;
+}
+
+.container .desc-token div{
+    text-align: left;
 }
 
 .container .records {

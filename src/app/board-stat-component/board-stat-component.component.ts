@@ -39,6 +39,18 @@ export class BoardStatComponentComponent {
         return player.active ? '#fff' : player.color;
     }
 
+    displayedPlayers(): ReadonlyArray<PlayerView> {
+        return this.model ? [...this.model.players].reverse() : [];
+    }
+
+    playerNumber(player: PlayerView): number {
+        return player.id === 'black' ? 1 : 2;
+    }
+
+    playerType(player: PlayerView): string {
+        return player.id === 'black' ? 'Human Agent' : this.selectedAgentLabel();
+    }
+
     updatePdn(value: string): void {
         this.pdnTextChange.emit(value);
     }

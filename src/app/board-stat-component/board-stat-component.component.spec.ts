@@ -35,4 +35,25 @@ describe('BoardStatComponentComponent', () => {
         component.opponentAgentChange.emit('alpha-beta');
         expect(component.opponentAgentChange.emit).toHaveBeenCalledWith('alpha-beta');
     });
+
+    it('shows Player 2 above Player 1 and updates the opponent type from the selection', () => {
+        const component = new BoardStatComponentComponent();
+        const black = {
+            id: 'black' as const, name: 'Player 1', color: '#444', active: false, manCount: 8, kingCount: 0
+        };
+        const white = {
+            id: 'white' as const, name: 'Opponent', color: '#e66', active: false, manCount: 8, kingCount: 0
+        };
+        component.model = { players: [black, white] } as any;
+        component.agentOptions = AGENT_REGISTRY;
+        component.selectedAgentId = 'random';
+
+        expect(component.displayedPlayers()).toEqual([white, black]);
+        expect(component.playerNumber(white)).toBe(2);
+        expect(component.playerType(white)).toBe('Random Agent');
+        expect(component.playerType(black)).toBe('Human Agent');
+
+        component.selectedAgentId = 'minimax';
+        expect(component.playerType(white)).toBe('Minimax Agent');
+    });
 });

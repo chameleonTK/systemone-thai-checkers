@@ -67,7 +67,8 @@ export class GamePresenter {
         for (let row = 0; row < 8; row += 1) {
             const tileRow: TileView[] = [];
             for (let column = 0; column < 8; column += 1) {
-                const square = BoardGeometry.toSquare(row, column);
+                const logicalCoordinate = BoardGeometry.changePerspective(row, column) as { row: number; column: number };
+                const square = BoardGeometry.toSquare(logicalCoordinate.row, logicalCoordinate.column);
                 tileRow.push(Object.freeze({
                     row,
                     column,
@@ -79,7 +80,11 @@ export class GamePresenter {
             tiles.push(Object.freeze(tileRow) as TileView[]);
         }
         const pieces: PieceView[] = snapshot.pieces.map((piece) => {
-            const coordinate = BoardGeometry.toCoordinate(piece.square) as { row: number; column: number };
+            const logicalCoordinate = BoardGeometry.toCoordinate(piece.square) as { row: number; column: number };
+            const coordinate = BoardGeometry.changePerspective(
+                logicalCoordinate.row,
+                logicalCoordinate.column
+            ) as { row: number; column: number };
             const player = players.find((candidate) => candidate.id === piece.player) as PlayerView;
             return Object.freeze({
                 square: piece.square,

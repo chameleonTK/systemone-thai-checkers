@@ -2,16 +2,17 @@
     <h1 class="title">{{txt('หมากฮอส')}}</h1>
     <h2>{{model.mode === 'review' ? 'Review' : txt('ตาที่')}} {{model.stepIndex}}</h2>
 
-    <div *ngFor="let player of model.players; let i = index"
+    <div *ngFor="let player of displayedPlayers()"
         class="desc"
-        [id]="'desc-player' + (i + 1)"
+        [id]="'desc-player' + playerNumber(player)"
         [style.background-color]="getBackgroundColor(player)"
         [style.color]="getTextColor(player)">
-        <div class="desc-name">{{player.name}}</div>
-        <ul class="desc-token">
-            <li>{{txt('อัศวิน')}}: <span class="knight">{{player.manCount}}</span> {{txt('ตัว')}}</li>
-            <li>{{txt('คิง')}}: <span class="king">{{player.kingCount}}</span> {{txt('ตัว')}}</li>
-        </ul>
+        <div class="desc-name">{{txt('ผู้เล่น')}} {{playerNumber(player)}}</div>
+        <div class="desc-type">Type: {{playerType(player)}}</div>
+        <div class="desc-token">
+            <div>{{txt('อัศวิน')}}: <span class="knight">{{player.manCount}}</span> {{txt('ตัว')}}</div>
+            <div>{{txt('คิง')}}: <span class="king">{{player.kingCount}}</span> {{txt('ตัว')}}</div>
+        </div>
     </div>
 
     <div class="desc records">

@@ -93,7 +93,7 @@ describe('GameSession', () => {
         });
         await session.start();
         session.selectSquare(5);
-        expect(renderer.models[renderer.models.length - 1].board.tiles[2][0].highlighted).toBeTrue();
+        expect(renderer.models[renderer.models.length - 1].board.tiles[5][7].highlighted).toBeTrue();
         session.selectSquare(9);
         await flush();
         expect(session.getLiveSnapshot().pieces).toContain(jasmine.objectContaining({ square: 9, player: 'black' }));
