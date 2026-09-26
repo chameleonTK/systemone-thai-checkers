@@ -33,6 +33,15 @@ Ref: [https://github.com/kschuetz/checkers](https://github.com/kschuetz/checkers
 
 The redesigned architecture and public contracts are documented in [`design/`](design/). See [`FEATURES.md`](FEATURES.md) for the implemented feature inventory and [`TEST_CHECKLIST.md`](TEST_CHECKLIST.md) for automated and manual acceptance coverage. To build and register another bot, follow [Adding a Checker Agent](design/adding-checker-agent.md).
 
+## System One agent
+
+Choose **System One Agent** in the opponent dropdown to run the decision model in the browser. A turn with one legal move is played immediately. Otherwise the agent describes the current position and up to 128 legal moves to Kev as a choice question; positions with more moves are randomly sampled down to that limit.
+
+After Start is clicked, the app loads pinned kev.js and the official ONNX Runtime browser module, then downloads the Kev
+0.8B `q8f32` bundle from Hugging Face (about 822 MB) and caches it in the browser. The game begins after loading finishes.
+Chrome with WebGPU is recommended; ONNX Runtime falls back to WASM when WebGPU is unavailable. The esm.sh, jsDelivr, and
+Hugging Face origins must be allowed by the deployment's CSP.
+
 ## Interesting rules
 *  Jumps are not compulsory but if a player refused to make an available jump, the opposing player could remove the piece that should have jumped. It is called "huff"
 *  International Checkers: knight can jump backward to capture the opponent's piece.

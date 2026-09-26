@@ -1,5 +1,5 @@
 import { BoardGeometry, GameSnapshot } from '../engine';
-import { SelectionState } from '../agents';
+import { AgentProgress, SelectionState } from '../agents';
 import {
     BoardView,
     GameViewModel,
@@ -15,6 +15,7 @@ export interface PresentationState {
     readonly setupAnimating?: boolean;
     readonly reviewCursor?: number;
     readonly reviewLength?: number;
+    readonly agentProgress?: AgentProgress | null;
 }
 
 export class GamePresenter {
@@ -57,7 +58,8 @@ export class GamePresenter {
             }),
             setupAnimating: !!state.setupAnimating,
             reviewCursor: state.reviewCursor || 0,
-            reviewLength: state.reviewLength || 0
+            reviewLength: state.reviewLength || 0,
+            agentProgress: state.agentProgress || null
         });
     }
 

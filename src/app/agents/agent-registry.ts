@@ -1,5 +1,6 @@
 import { AlphaBetaAgent } from './alpha-beta-agent';
 import { HumanAgent } from './human-agent';
+import { KevAgent } from './kev-agent';
 import { MinimaxAgent } from './minimax-agent';
 import { PlayableAgent } from './agent-api';
 import { RandomBot } from './random-bot';
@@ -16,6 +17,7 @@ export const DEFAULT_AGENT_ID = 'human';
 export const AGENT_REGISTRY: ReadonlyArray<AgentRegistration> = Object.freeze([
     Object.freeze({ id: DEFAULT_AGENT_ID, label: 'Human Agent', create: () => new HumanAgent() }),
     Object.freeze({ id: 'random', label: 'Random Agent', create: () => new RandomBot(), minimumResponseDelayMs: 500 }),
+    Object.freeze({ id: 'kev', label: 'System One [Kev] Agent', create: () => new KevAgent(), minimumResponseDelayMs: 500 }),
     Object.freeze({ id: 'minimax', label: 'Minimax Agent', create: () => new MinimaxAgent(), minimumResponseDelayMs: 500 }),
     Object.freeze({
         id: 'alpha-beta',

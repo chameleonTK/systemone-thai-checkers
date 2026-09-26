@@ -56,4 +56,14 @@ describe('BoardStatComponentComponent', () => {
         component.selectedAgentId = 'minimax';
         expect(component.playerType(white)).toBe('Minimax Agent');
     });
+
+    it('calculates bounded model-loading progress and supports an indeterminate state', () => {
+        const component = new BoardStatComponentComponent();
+        component.model = { agentProgress: { label: 'Loading Kev model' } } as any;
+        expect(component.loadingPercent()).toBeNull();
+        component.model = { agentProgress: { label: 'Downloading', loaded: 25, total: 100 } } as any;
+        expect(component.loadingPercent()).toBe(25);
+        component.model = { agentProgress: { label: 'Downloading', loaded: 120, total: 100 } } as any;
+        expect(component.loadingPercent()).toBe(100);
+    });
 });

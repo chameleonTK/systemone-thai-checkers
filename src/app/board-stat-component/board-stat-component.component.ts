@@ -51,6 +51,14 @@ export class BoardStatComponentComponent {
         return player.id === 'black' ? 'Human Agent' : this.selectedAgentLabel();
     }
 
+    loadingPercent(): number | null {
+        const progress = this.model && this.model.agentProgress;
+        if (!progress || progress.loaded === undefined || !progress.total) {
+            return null;
+        }
+        return Math.max(0, Math.min(100, Math.round(progress.loaded * 100 / progress.total)));
+    }
+
     updatePdn(value: string): void {
         this.pdnTextChange.emit(value);
     }

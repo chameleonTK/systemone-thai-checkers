@@ -1,3 +1,4 @@
+import { AgentProgress } from '../agents/agent-api';
 import { GamePhase, GameResult, PieceKind, PlayerId } from '../engine';
 
 export type SessionMode = 'live' | 'review';
@@ -61,6 +62,7 @@ export interface GameViewModel {
     readonly setupAnimating: boolean;
     readonly reviewCursor: number;
     readonly reviewLength: number;
+    readonly agentProgress: AgentProgress | null;
 }
 
 export interface SessionDiagnostic {

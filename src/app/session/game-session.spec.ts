@@ -53,6 +53,21 @@ class DeferredAgent implements PlayableAgent {
     }
 }
 
+class PreparingAgent extends DeferredAgent {
+    prepareCalled = false;
+    private resolvePreparation: () => void;
+
+    prepare(reportProgress: (progress: { label: string; loaded?: number; total?: number }) => void): Promise<void> {
+        this.prepareCalled = true;
+        reportProgress({ label: 'Loading test model', loaded: 25, total: 100 });
+        return new Promise<void>((resolve) => this.resolvePreparation = resolve);
+    }
+
+    finishPreparation(): void {
+        this.resolvePreparation();
+    }
+}
+
 describe('GameSession', () => {
     async function flush(): Promise<void> {
         await Promise.resolve();
@@ -79,6 +94,29 @@ describe('GameSession', () => {
         await starting;
         expect(session.getLiveSnapshot().phase).toBe('active');
         expect(black.context.player).toBe('black');
+        session.destroy();
+    });
+
+    it('loads a preparable agent after Start and before dispatching its first turn', async () => {
+        const renderer = new TestRenderer();
+        const black = new PreparingAgent();
+        const session = new GameSession({
+            seats: [
+                { player: { id: 'black', name: 'Black', color: '#000' }, agent: black },
+                { player: { id: 'white', name: 'White', color: '#fff' }, agent: new HumanAgent() }
+            ], renderer
+        });
+        const starting = session.start();
+        expect(black.prepareCalled).toBeTrue();
+        expect(black.context).toBeUndefined();
+        expect(session.getLiveSnapshot().phase).toBe('ready');
+        expect(renderer.models[renderer.models.length - 1].agentProgress).toEqual({
+            label: 'Loading test model', loaded: 25, total: 100
+        });
+        black.finishPreparation();
+        await starting;
+        expect(black.context.player).toBe('black');
+        expect(renderer.models[renderer.models.length - 1].agentProgress).toBeNull();
         session.destroy();
     });
 
@@ -182,6 +220,27 @@ describe('GameSession', () => {
         expect(renderer.diagnostics).toContain(jasmine.objectContaining({
             code: 'AGENT_ERROR', message: 'broken bot'
         }));
+        session.destroy();
+    });
+
+    it('renders agent progress and clears it when the move resolves', async () => {
+        const renderer = new TestRenderer();
+        const black = new DeferredAgent();
+        const session = new GameSession({
+            seats: [
+                { player: { id: 'black', name: 'Black', color: '#000' }, agent: black },
+                { player: { id: 'white', name: 'White', color: '#fff' }, agent: new HumanAgent() }
+            ], renderer
+        });
+        await session.start();
+        black.context.reportProgress({ label: 'Downloading Kev model', loaded: 50, total: 100 });
+        expect(renderer.models[renderer.models.length - 1].agentProgress).toEqual({
+            label: 'Downloading Kev model', loaded: 50, total: 100
+        });
+        const move = black.context.legalMoves[0];
+        black.resolve({ from: move.from, to: move.to });
+        await flush();
+        expect(renderer.models[renderer.models.length - 1].agentProgress).toBeNull();
         session.destroy();
     });
 

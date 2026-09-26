@@ -1,6 +1,8 @@
 import {
+    AgentProgress,
     AgentTurnContext,
     isInteractiveAgent,
+    isPreparableAgent,
     PlayableAgent,
     SelectionState,
     TurnCancellationSource
@@ -46,6 +48,7 @@ export class GameSession {
     private turnSerial = 0;
     private starting = false;
     private playingReview = false;
+    private agentProgress: AgentProgress | null = null;
 
     constructor(config: GameSessionConfig) {
         if (config.seats.length !== 2) {
@@ -68,6 +71,20 @@ export class GameSession {
             return;
         }
         this.starting = true;
+        this.render();
+        try {
+            await this.prepareAgents();
+        } catch (error) {
+            this.starting = false;
+            this.agentProgress = null;
+            this.renderer.showDiagnostic({
+                code: 'AGENT_ERROR',
+                message: error instanceof Error ? error.message : String(error)
+            });
+            this.render();
+            return;
+        }
+        this.agentProgress = null;
         try {
             await this.renderer.animateSetup(this.model(snapshot, EMPTY_SELECTION, true));
         } catch (error) {
@@ -222,7 +239,13 @@ export class GameSession {
             player: snapshot.activePlayer,
             snapshot,
             legalMoves: snapshot.legalMoves,
-            simulation: this.engine.createSimulationSeed()
+            simulation: this.engine.createSimulationSeed(),
+            reportProgress: (progress) => {
+                if (!cancellation.cancelled && this.pendingCancellation === cancellation) {
+                    this.agentProgress = progress;
+                    this.render();
+                }
+            }
         });
 
         let choice: Promise<{ readonly from: number; readonly to: number }>;
@@ -239,6 +262,7 @@ export class GameSession {
         }
         this.render();
         choice.then(async (intent) => {
+            this.agentProgress = null;
             const wait = seat.minimumResponseDelayMs || 0;
             if (wait > 0) {
                 await this.delay(wait);
@@ -261,6 +285,7 @@ export class GameSession {
             this.render();
             this.dispatchTurn();
         }).catch((error) => {
+            this.agentProgress = null;
             if (cancellation.cancelled) {
                 return;
             }
@@ -271,6 +296,20 @@ export class GameSession {
             });
             this.render();
         });
+    }
+
+    private async prepareAgents(): Promise<void> {
+        const preparations: Array<Promise<void>> = this.seats
+            .filter((seat) => isPreparableAgent(seat.agent))
+            .map((seat) => isPreparableAgent(seat.agent)
+                ? seat.agent.prepare((progress: AgentProgress) => {
+                    if (this.starting) {
+                        this.agentProgress = progress;
+                        this.render();
+                    }
+                })
+                : Promise.resolve());
+        await Promise.all(preparations);
     }
 
     private handleImmediateResult(result: CommandResult): void {
@@ -293,6 +332,7 @@ export class GameSession {
             this.pendingCancellation.cancel();
             this.pendingCancellation = null;
         }
+        this.agentProgress = null;
     }
 
     private render(): void {
@@ -319,9 +359,10 @@ export class GameSession {
         return this.presenter.project(snapshot, {
             mode: this.mode,
             selection,
-            setupAnimating,
+            setupAnimating: setupAnimating || this.starting,
             reviewCursor: this.playback.getCursor(),
-            reviewLength: this.playback.getLength()
+            reviewLength: this.playback.getLength(),
+            agentProgress: this.agentProgress
         });
     }
 }

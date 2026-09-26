@@ -42,10 +42,21 @@ export interface AgentTurnContext {
     readonly snapshot: GameSnapshot;
     readonly legalMoves: ReadonlyArray<MoveOption>;
     readonly simulation: SimulationSeed;
+    readonly reportProgress?: (progress: AgentProgress | null) => void;
+}
+
+export interface AgentProgress {
+    readonly label: string;
+    readonly loaded?: number;
+    readonly total?: number;
 }
 
 export interface PlayableAgent {
     chooseMove(context: AgentTurnContext, cancellation: TurnCancellation): Promise<MoveIntent>;
+}
+
+export interface PreparableAgent extends PlayableAgent {
+    prepare(reportProgress: (progress: AgentProgress) => void): Promise<void>;
 }
 
 export interface SelectionState {
@@ -60,4 +71,8 @@ export interface InteractiveAgent extends PlayableAgent {
 
 export function isInteractiveAgent(agent: PlayableAgent): agent is InteractiveAgent {
     return typeof (agent as InteractiveAgent).selectSquare === 'function';
+}
+
+export function isPreparableAgent(agent: PlayableAgent): agent is PreparableAgent {
+    return typeof (agent as PreparableAgent).prepare === 'function';
 }

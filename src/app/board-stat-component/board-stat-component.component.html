@@ -21,6 +21,11 @@
 
     <div class="result" *ngIf="model.resultText">{{model.resultText}}</div>
     <div class="diagnostic" *ngIf="diagnostic">{{diagnostic}}</div>
+    <div class="model-loading" *ngIf="model.agentProgress" role="status" aria-live="polite">
+        <div class="model-loading-label">{{model.agentProgress.label}}</div>
+        <progress max="100" [attr.value]="loadingPercent()"></progress>
+        <div class="model-loading-percent" *ngIf="loadingPercent() !== null">{{loadingPercent()}}%</div>
+    </div>
 
     <div class="controls" *ngIf="model.mode === 'live'">
         <div class="start-split">
