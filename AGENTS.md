@@ -21,7 +21,3 @@ Use TypeScript with spaces for indentation, single quotes, semicolons, and lines
 ## Testing Guidelines
 
 Write Jasmine tests in a neighboring `*.spec.ts` file and group behavior with clear `describe`/`it` statements. Add focused tests for move validation, compulsory captures, promotion, multi-jumps, and draw conditions when changing game logic. Update `e2e/src/app.e2e-spec.ts` for user-visible flows. No coverage threshold is configured; nevertheless, new behavior should include regression coverage.
-
-## Commit & Pull Request Guidelines
-
-Git history is not included in this workspace snapshot. Use short, imperative commit subjects, optionally scoped, such as `fix(board): enforce compulsory capture`. Keep commits focused. Pull requests should explain the rule or UI behavior changed, list validation commands run, link related issues, and include screenshots or recordings for visual changes. Call out generated artifacts explicitly if they must be updated.
